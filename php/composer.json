@@ -1,0 +1,9 @@
+{
+  "name": "adflow/sdk",
+  "description": "Official PHP SDK for the AdFlow bridge — Meta Marketing (Ads), Threads, and free Facebook Pages & Instagram through AdFlow's approved app. No Meta App Review required.",
+  "type": "library",
+  "license": "MIT",
+  "require": { "php": ">=7.4", "ext-curl": "*", "ext-json": "*" },
+  "autoload": { "files": ["src/AdFlow.php"] },
+  "keywords": ["adflow", "meta", "marketing-api", "facebook-ads", "threads", "bridge", "sdk"]
+}

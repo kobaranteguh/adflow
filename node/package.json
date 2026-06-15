@@ -1,0 +1,13 @@
+{
+  "name": "@adflow/sdk",
+  "version": "0.1.0",
+  "description": "Official Node.js SDK for the AdFlow bridge — Meta Marketing (Ads), Threads, and free Facebook Pages & Instagram through AdFlow's approved app. No Meta App Review required.",
+  "main": "src/index.js",
+  "types": "types/index.d.ts",
+  "files": ["src", "types", "README.md", "LICENSE"],
+  "keywords": ["adflow", "meta", "marketing-api", "facebook-ads", "threads", "facebook-pages", "bridge", "sdk"],
+  "author": "AdFlow",
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" },
+  "repository": { "type": "git", "url": "https://github.com/adflow/sdk-node" }
+}

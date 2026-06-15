@@ -1,0 +1,9 @@
+# Dependencies / build artefacts (none are committed — SDKs are zero-dep source)
+node_modules/
+vendor/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+.DS_Store
