@@ -89,6 +89,11 @@ class ThreadsScope {
     public function publish(array $body) { return $this->http->request('POST', "/threads/{$this->id}/posts", ['body' => $body]); }
     public function insights() { return $this->http->request('GET', "/threads/{$this->id}/insights"); }
     public function postInsights(string $postId) { return $this->http->request('GET', "/threads/posts/$postId/insights", ['query' => ['profileId' => $this->id]]); }
+    public function replies(string $postId, array $query = []) { return $this->http->request('GET', "/threads/posts/$postId/replies", ['query' => array_merge(['profileId' => $this->id], $query)]); }
+    public function reply(string $postId, string $text) { return $this->http->request('POST', "/threads/posts/$postId/replies", ['query' => ['profileId' => $this->id], 'body' => ['text' => $text]]); }
+    public function hideReply(string $replyId, bool $hide) { return $this->http->request('POST', "/threads/replies/$replyId", ['query' => ['profileId' => $this->id], 'body' => ['hide' => $hide]]); }
+    public function deletePost(string $postId) { return $this->http->request('DELETE', "/threads/posts/$postId", ['query' => ['profileId' => $this->id]]); }
+    public function mentions(array $query = []) { return $this->http->request('GET', "/threads/{$this->id}/mentions", ['query' => $query]); }
 }
 
 class PageScope {

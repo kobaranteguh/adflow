@@ -95,6 +95,11 @@ class ThreadsScope {
   publish(body) { return this._http.request('POST', `/threads/${this._id}/posts`, { body }); }
   insights() { return this._http.request('GET', `/threads/${this._id}/insights`); }
   postInsights(postId) { return this._http.request('GET', `/threads/posts/${postId}/insights`, { query: { profileId: this._id } }); }
+  replies(postId, query) { return this._http.request('GET', `/threads/posts/${postId}/replies`, { query: { profileId: this._id, ...query } }); }
+  reply(postId, text) { return this._http.request('POST', `/threads/posts/${postId}/replies`, { query: { profileId: this._id }, body: { text } }); }
+  hideReply(replyId, hide) { return this._http.request('POST', `/threads/replies/${replyId}`, { query: { profileId: this._id }, body: { hide } }); }
+  deletePost(postId) { return this._http.request('DELETE', `/threads/posts/${postId}`, { query: { profileId: this._id } }); }
+  mentions(query) { return this._http.request('GET', `/threads/${this._id}/mentions`, { query }); }
 }
 
 // ── Pages (free) ────────────────────────────────────────────────────────────────

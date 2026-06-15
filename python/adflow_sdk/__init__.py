@@ -90,6 +90,11 @@ class ThreadsScope:
     def publish(self, **body): return self._http.request("POST", f"/threads/{self._id}/posts", body=body)
     def insights(self): return self._http.request("GET", f"/threads/{self._id}/insights")
     def post_insights(self, post_id): return self._http.request("GET", f"/threads/posts/{post_id}/insights", query={"profileId": self._id})
+    def replies(self, post_id, **query): return self._http.request("GET", f"/threads/posts/{post_id}/replies", query={"profileId": self._id, **query})
+    def reply(self, post_id, text): return self._http.request("POST", f"/threads/posts/{post_id}/replies", query={"profileId": self._id}, body={"text": text})
+    def hide_reply(self, reply_id, hide): return self._http.request("POST", f"/threads/replies/{reply_id}", query={"profileId": self._id}, body={"hide": hide})
+    def delete_post(self, post_id): return self._http.request("DELETE", f"/threads/posts/{post_id}", query={"profileId": self._id})
+    def mentions(self, **query): return self._http.request("GET", f"/threads/{self._id}/mentions", query=query)
 
 
 class PageScope:
