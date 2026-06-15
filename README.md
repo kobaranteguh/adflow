@@ -11,6 +11,14 @@ the ad-account / Threads **slots you enable** (Pages & IG are free); billing is 
 | PHP      | `php`    | `adflow/sdk`   | `composer require adflow/sdk` |
 | Python   | `python` | `adflow-sdk`   | `pip install adflow-sdk` |
 
+## 📚 Documentation
+
+- **[docs/PARTNER-GUIDE.md](docs/PARTNER-GUIDE.md)** — start here: concepts, onboarding, SDK usage, billing, webhooks, FAQ
+- **[docs/API-REFERENCE.md](docs/API-REFERENCE.md)** — every endpoint, params, responses, curl examples
+- **[docs/META-POLICY.md](docs/META-POLICY.md)** — Meta compliance, verified Tech Provider status, rate limits, limitations
+
+## SDK surface
+
 Same shape in every language — one `AdFlow` client:
 - `new AdFlow({ apiKey })` — Bearer auth with an `ak_live_…` key (Developer → API Access).
 - `.clients` — reseller onboarding: `create({displayName})` → `onboardUrl` to share with the client.
