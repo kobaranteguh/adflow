@@ -113,6 +113,24 @@ class PageScope {
   sendMessage(conversationId, message) { return this._http.request('POST', `/pages/conversations/${conversationId}/messages`, { query: { pageId: this._id }, body: { message } }); }
 }
 
+// ── Instagram (per IG account scope) ────────────────────────────────────────────
+class InstagramScope {
+  constructor(http, igId) { this._http = http; this._id = igId; }
+  media(query) { return this._http.request('GET', `/instagram/${this._id}/media`, { query }); }
+  /** Publish: { mediaType:"IMAGE"|"VIDEO"|"REELS"|"STORIES", imageUrl?, videoUrl?, caption? } */
+  publish(body) { return this._http.request('POST', `/instagram/${this._id}/media`, { body }); }
+  insights(query) { return this._http.request('GET', `/instagram/${this._id}/insights`, { query }); }
+  mediaInsights(mediaId, mediaType = 'IMAGE') { return this._http.request('GET', `/instagram/media/${mediaId}/insights`, { query: { igId: this._id, mediaType } }); }
+  comments(mediaId, query) { return this._http.request('GET', `/instagram/media/${mediaId}/comments`, { query: { igId: this._id, ...query } }); }
+  comment(mediaId, message) { return this._http.request('POST', `/instagram/media/${mediaId}/comments`, { query: { igId: this._id }, body: { message } }); }
+  replyComment(commentId, message) { return this._http.request('POST', `/instagram/comments/${commentId}`, { query: { igId: this._id }, body: { message } }); }
+  hideComment(commentId, hidden) { return this._http.request('POST', `/instagram/comments/${commentId}`, { query: { igId: this._id }, body: { hidden } }); }
+  deleteComment(commentId) { return this._http.request('DELETE', `/instagram/comments/${commentId}`, { query: { igId: this._id } }); }
+  conversations(query) { return this._http.request('GET', `/instagram/${this._id}/conversations`, { query }); }
+  messages(conversationId, query) { return this._http.request('GET', `/instagram/conversations/${conversationId}/messages`, { query: { igId: this._id, ...query } }); }
+  sendMessage(recipientId, message) { return this._http.request('POST', `/instagram/conversations/${recipientId}/messages`, { query: { igId: this._id }, body: { recipientId, message } }); }
+}
+
 class AdFlow {
   constructor(config) {
     this._http = new HttpClient(config);
@@ -126,6 +144,8 @@ class AdFlow {
   profile(profileId) { return new ThreadsScope(this._http, profileId); }
   /** Free Facebook Page ops: page('123').createPost({...}). */
   page(pageId) { return new PageScope(this._http, pageId); }
+  /** Free Instagram ops: instagram('178…').publish({...}). */
+  instagram(igId) { return new InstagramScope(this._http, igId); }
   /** Escape hatch for any /api/v1 endpoint. */
   request(method, path, opts) { return this._http.request(method, path, opts); }
 }

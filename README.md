@@ -25,6 +25,7 @@ Same shape in every language — one `AdFlow` client:
 - `.account(actId)` — Ads (campaigns, ad sets, ads, insights, audiences, pixels).
 - `.profile(threadsId)` — Threads (publish, posts, insights).
 - `.page(pageId)` — Facebook Pages (free).
+- `.instagram(igId)` — Instagram (free): publish, comments, insights, DMs.
 - `.request(method, path, …)` — escape hatch for any `/api/v1` endpoint.
 - Errors throw `AdFlowError` with `.code` + `.status`.
 

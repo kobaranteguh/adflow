@@ -188,7 +188,29 @@ function verify(rawBody, header, secret) {
 
 ---
 
-## Instagram & TikTok
+## Instagram
 
-Pages-linked Instagram accounts import during onboarding (free), but **standalone IG endpoints and
-TikTok are not yet exposed** — coming soon. See the developer portal for status.
+Free for any partner with ≥1 paid platform. IG accounts import automatically when a client connects a
+Facebook Page with a linked IG Business account. Scope: `instagram('178…')` in SDKs.
+
+| Method | Endpoint | Purpose |
+| ------ | -------- | ------- |
+| GET | `/instagram/{igId}/media?limit=25` | List media |
+| POST | `/instagram/{igId}/media` | Publish `{ mediaType:"IMAGE"|"VIDEO"|"REELS"|"STORIES", imageUrl?, videoUrl?, caption? }` (2-step container→publish, handled server-side) |
+| GET | `/instagram/{igId}/insights?since=&until=` | Account insights |
+| GET | `/instagram/media/{id}/insights?igId=&mediaType=` | Media insights |
+| GET | `/instagram/media/{id}/comments?igId=` | List comments |
+| POST | `/instagram/media/{id}/comments?igId=` | Comment `{ message }` |
+| POST | `/instagram/comments/{id}?igId=` | Reply `{ message }` or hide `{ hidden: true/false }` |
+| DELETE | `/instagram/comments/{id}?igId=` | Delete comment |
+| GET | `/instagram/{igId}/conversations?limit=20` | DM conversations |
+| GET | `/instagram/conversations/{id}/messages?igId=` | Messages |
+| POST | `/instagram/conversations/{id}/messages?igId=` | Send DM `{ recipientId, message }` (24h window) |
+
+> Meta limits: cannot delete published media or edit captions; DM sending only within the human-agent
+> window. Some `instagram_business_*` permissions are pending App Review — partner access opens once
+> Advanced Access is granted.
+
+## TikTok
+
+Not yet exposed — on the roadmap.

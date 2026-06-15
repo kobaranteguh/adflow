@@ -103,6 +103,22 @@ class PageScope:
         return self._http.request("POST", f"/pages/conversations/{conversation_id}/messages", query={"pageId": self._id}, body={"message": message})
 
 
+class InstagramScope:
+    def __init__(self, http, ig_id): self._http = http; self._id = ig_id
+    def media(self, **query): return self._http.request("GET", f"/instagram/{self._id}/media", query=query)
+    def publish(self, **body): return self._http.request("POST", f"/instagram/{self._id}/media", body=body)
+    def insights(self, **query): return self._http.request("GET", f"/instagram/{self._id}/insights", query=query)
+    def media_insights(self, media_id, media_type="IMAGE"): return self._http.request("GET", f"/instagram/media/{media_id}/insights", query={"igId": self._id, "mediaType": media_type})
+    def comments(self, media_id, **query): return self._http.request("GET", f"/instagram/media/{media_id}/comments", query={"igId": self._id, **query})
+    def comment(self, media_id, message): return self._http.request("POST", f"/instagram/media/{media_id}/comments", query={"igId": self._id}, body={"message": message})
+    def reply_comment(self, comment_id, message): return self._http.request("POST", f"/instagram/comments/{comment_id}", query={"igId": self._id}, body={"message": message})
+    def hide_comment(self, comment_id, hidden): return self._http.request("POST", f"/instagram/comments/{comment_id}", query={"igId": self._id}, body={"hidden": hidden})
+    def delete_comment(self, comment_id): return self._http.request("DELETE", f"/instagram/comments/{comment_id}", query={"igId": self._id})
+    def conversations(self, **query): return self._http.request("GET", f"/instagram/{self._id}/conversations", query=query)
+    def messages(self, conversation_id, **query): return self._http.request("GET", f"/instagram/conversations/{conversation_id}/messages", query={"igId": self._id, **query})
+    def send_message(self, recipient_id, message): return self._http.request("POST", f"/instagram/conversations/{recipient_id}/messages", query={"igId": self._id}, body={"recipientId": recipient_id, "message": message})
+
+
 class AdFlow:
     def __init__(self, api_key, base_url="https://adflowapps.com", timeout=20):
         self._http = _Http(api_key, base_url, timeout)
@@ -111,4 +127,5 @@ class AdFlow:
     def account(self, account_id): return AdAccountScope(self._http, account_id)
     def profile(self, profile_id): return ThreadsScope(self._http, profile_id)
     def page(self, page_id): return PageScope(self._http, page_id)
+    def instagram(self, ig_id): return InstagramScope(self._http, ig_id)
     def request(self, method, path, query=None, body=None): return self._http.request(method, path, query, body)

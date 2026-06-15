@@ -103,6 +103,22 @@ class PageScope {
     public function sendMessage(string $conversationId, string $message) { return $this->http->request('POST', "/pages/conversations/$conversationId/messages", ['query' => ['pageId' => $this->id], 'body' => ['message' => $message]]); }
 }
 
+class InstagramScope {
+    public function __construct(private HttpClient $http, private string $id) {}
+    public function media(array $query = []) { return $this->http->request('GET', "/instagram/{$this->id}/media", ['query' => $query]); }
+    public function publish(array $body) { return $this->http->request('POST', "/instagram/{$this->id}/media", ['body' => $body]); }
+    public function insights(array $query = []) { return $this->http->request('GET', "/instagram/{$this->id}/insights", ['query' => $query]); }
+    public function mediaInsights(string $mediaId, string $mediaType = 'IMAGE') { return $this->http->request('GET', "/instagram/media/$mediaId/insights", ['query' => ['igId' => $this->id, 'mediaType' => $mediaType]]); }
+    public function comments(string $mediaId, array $query = []) { return $this->http->request('GET', "/instagram/media/$mediaId/comments", ['query' => array_merge(['igId' => $this->id], $query)]); }
+    public function comment(string $mediaId, string $message) { return $this->http->request('POST', "/instagram/media/$mediaId/comments", ['query' => ['igId' => $this->id], 'body' => ['message' => $message]]); }
+    public function replyComment(string $commentId, string $message) { return $this->http->request('POST', "/instagram/comments/$commentId", ['query' => ['igId' => $this->id], 'body' => ['message' => $message]]); }
+    public function hideComment(string $commentId, bool $hidden) { return $this->http->request('POST', "/instagram/comments/$commentId", ['query' => ['igId' => $this->id], 'body' => ['hidden' => $hidden]]); }
+    public function deleteComment(string $commentId) { return $this->http->request('DELETE', "/instagram/comments/$commentId", ['query' => ['igId' => $this->id]]); }
+    public function conversations(array $query = []) { return $this->http->request('GET', "/instagram/{$this->id}/conversations", ['query' => $query]); }
+    public function messages(string $conversationId, array $query = []) { return $this->http->request('GET', "/instagram/conversations/$conversationId/messages", ['query' => array_merge(['igId' => $this->id], $query)]); }
+    public function sendMessage(string $recipientId, string $message) { return $this->http->request('POST', "/instagram/conversations/$recipientId/messages", ['query' => ['igId' => $this->id], 'body' => ['recipientId' => $recipientId, 'message' => $message]]); }
+}
+
 class AdFlow {
     private HttpClient $http;
     public Clients $clients;
@@ -114,5 +130,6 @@ class AdFlow {
     public function account(string $accountId): AdAccountScope { return new AdAccountScope($this->http, $accountId); }
     public function profile(string $profileId): ThreadsScope { return new ThreadsScope($this->http, $profileId); }
     public function page(string $pageId): PageScope { return new PageScope($this->http, $pageId); }
+    public function instagram(string $igId): InstagramScope { return new InstagramScope($this->http, $igId); }
     public function request(string $method, string $path, array $opts = []) { return $this->http->request($method, $path, $opts); }
 }
