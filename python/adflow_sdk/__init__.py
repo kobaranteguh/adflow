@@ -112,6 +112,8 @@ class InstagramScope:
     def __init__(self, http, ig_id): self._http = http; self._id = ig_id
     def media(self, **query): return self._http.request("GET", f"/instagram/{self._id}/media", query=query)
     def publish(self, **body): return self._http.request("POST", f"/instagram/{self._id}/media", body=body)
+    def publish_carousel(self, children, caption=None): return self._http.request("POST", f"/instagram/{self._id}/media", body={"mediaType": "CAROUSEL", "children": children, "caption": caption})
+    def stories(self): return self._http.request("GET", f"/instagram/{self._id}/stories")
     def insights(self, **query): return self._http.request("GET", f"/instagram/{self._id}/insights", query=query)
     def media_insights(self, media_id, media_type="IMAGE"): return self._http.request("GET", f"/instagram/media/{media_id}/insights", query={"igId": self._id, "mediaType": media_type})
     def comments(self, media_id, **query): return self._http.request("GET", f"/instagram/media/{media_id}/comments", query={"igId": self._id, **query})

@@ -112,6 +112,8 @@ class InstagramScope {
     public function __construct(private HttpClient $http, private string $id) {}
     public function media(array $query = []) { return $this->http->request('GET', "/instagram/{$this->id}/media", ['query' => $query]); }
     public function publish(array $body) { return $this->http->request('POST', "/instagram/{$this->id}/media", ['body' => $body]); }
+    public function publishCarousel(array $children, ?string $caption = null) { return $this->http->request('POST', "/instagram/{$this->id}/media", ['body' => ['mediaType' => 'CAROUSEL', 'children' => $children, 'caption' => $caption]]); }
+    public function stories() { return $this->http->request('GET', "/instagram/{$this->id}/stories"); }
     public function insights(array $query = []) { return $this->http->request('GET', "/instagram/{$this->id}/insights", ['query' => $query]); }
     public function mediaInsights(string $mediaId, string $mediaType = 'IMAGE') { return $this->http->request('GET', "/instagram/media/$mediaId/insights", ['query' => ['igId' => $this->id, 'mediaType' => $mediaType]]); }
     public function comments(string $mediaId, array $query = []) { return $this->http->request('GET', "/instagram/media/$mediaId/comments", ['query' => array_merge(['igId' => $this->id], $query)]); }

@@ -124,6 +124,9 @@ class InstagramScope {
   media(query) { return this._http.request('GET', `/instagram/${this._id}/media`, { query }); }
   /** Publish: { mediaType:"IMAGE"|"VIDEO"|"REELS"|"STORIES", imageUrl?, videoUrl?, caption? } */
   publish(body) { return this._http.request('POST', `/instagram/${this._id}/media`, { body }); }
+  /** Publish a carousel. children: [{ imageUrl?|videoUrl? }, …] (2–10 items). */
+  publishCarousel(children, caption) { return this._http.request('POST', `/instagram/${this._id}/media`, { body: { mediaType: 'CAROUSEL', children, caption } }); }
+  stories() { return this._http.request('GET', `/instagram/${this._id}/stories`); }
   insights(query) { return this._http.request('GET', `/instagram/${this._id}/insights`, { query }); }
   mediaInsights(mediaId, mediaType = 'IMAGE') { return this._http.request('GET', `/instagram/media/${mediaId}/insights`, { query: { igId: this._id, mediaType } }); }
   comments(mediaId, query) { return this._http.request('GET', `/instagram/media/${mediaId}/comments`, { query: { igId: this._id, ...query } }); }
