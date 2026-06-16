@@ -245,8 +245,13 @@ Dynamic product ads (DPA) and catalog-sales campaigns depend on this.
 | GET | `…/insights?date_preset=` / `?since=&until=` | Available | Date preset or custom range |
 | POST | `/ads/{accountId}/reports` | Available | Start async report → `report_run_id` |
 | GET | `/ads/reports/{id}?accountId=` | Available | Poll async report → `{ status, percent, results? }` |
-| — | cursor pagination on lists | Partial | AdFlow auto-follows paging (≤ ~10 pages); explicit `after` cursor is Planned |
-| — | CSV export / scheduled reports | Planned | JSON only today |
+| GET | `/ads/reports/{id}?accountId=&format=csv` | Available | Download a completed report as CSV |
+| GET/POST | `/ads/{accountId}/scheduled-reports` | Available | List / create a scheduled report (`frequency`: daily·weekly·monthly, `format`: json·csv) |
+| GET/PATCH/DELETE | `/ads/scheduled-reports/{id}` | Available | Detail (incl. `lastResult`) / toggle / delete |
+| — | cursor pagination on lists | Available | Pass `?paginate=1` or `?after=` → `{ items, paging: { after, has_next } }`; default returns the full array |
+
+Scheduled reports run on AdFlow's cron and are delivered to your registered webhooks (event
+`report.scheduled`) plus stored on the report (`lastResult`).
 
 ```bash
 curl "https://adflowapps.com/api/v1/ads/act_123/insights?level=ad&breakdowns=publisher_platform&since=2026-06-01&until=2026-06-15&fields=ad_id,spend,actions" \
@@ -273,11 +278,14 @@ Register a callback in **Developer → API Access → Webhooks**. AdFlow forward
 - **Payload:** the standard Meta shape (`{ object, entry: [ … ] }`) so you parse it like Meta.
 - **Retry:** non-2xx responses are retried with backoff; deliveries are logged.
 
-## 23. Pagination  · *Partial*
-- List endpoints currently return the **concatenated** result set (AdFlow follows Meta's
+## 23. Pagination  · *Available*
+- **Default:** list endpoints return the **concatenated** result set (AdFlow follows Meta's
   `paging.next` internally, up to a safety cap of ~10 pages / ~1,000 items).
-- **Planned:** opt-in cursor passthrough (`?after=` + `paging` in the response) for very large sets.
-- Async reports (§20) are the recommended path for large pulls.
+- **Cursor mode (opt-in):** add `?paginate=1` or `?after=<cursor>` to a list endpoint → response
+  becomes `{ items: [...], paging: { after: "<cursor>|null", has_next: true|false } }`. Pass the
+  returned `after` back to fetch the next page. `?limit=` controls page size.
+- Supported on: creatives, images, videos, custom-conversions, offline-sets, business, lead-forms,
+  leads. Async reports (§20) remain the recommended path for very large pulls.
 
 ## 24. Error codes  · *Available*
 Envelope: `{ "ok": false, "error": { "code": "...", "message": "..." } }`. `message` is Meta's own
@@ -319,6 +327,7 @@ Manager API).
 
 | Date | Change |
 |---|---|
+| 2026-06-17 | **Reporting tooling.** Promoted to Available: cursor pagination (`?paginate=1`/`?after=`) on all list endpoints; CSV export (`?format=csv`) on async reports; **scheduled reports** (`/ads/{acc}/scheduled-reports`) delivered via cron + webhooks. |
 | 2026-06-17 | **Asset & business read release.** Promoted to Available: Page selection (`/ads/{acc}/pages`), IG account selection (`/ads/{acc}/instagram-accounts`), lead-form schema (`/ads/lead-forms/{id}`), pixel diagnostics (`/ads/pixels/{id}/diagnostics`), business list/detail (`/ads/business`, `/ads/business/{id}`). All within our Full Access permissions. |
 | 2026-06-17 | **Full Access parity release.** Added account detail/funding/spend-cap; full update + delete for campaign/ad set/ad; creatives + image/video upload + preview; audiences (lookalike/website/engagement/custom + hashed member upload + delete); reach-estimate + targeting search/validate; raw + async insights; pixel create/health + **Conversions API** + custom & offline conversions; lead form + lead retrieval; `leadgen` webhook. |
 | (earlier) | Initial release: campaigns, ad sets, ads, audiences, pixels, account insights. |
@@ -327,4 +336,3 @@ Manager API).
 - **Catalog / product ads** — after `catalog_management` review approval.
 - **Lead form create + test lead** — needs `pages_manage_ads` (pending review).
 - **System-user token flow & asset-permission writes** — enterprise.
-- **Cursor pagination, report export (CSV), scheduled reports** — architecture, not permission.
