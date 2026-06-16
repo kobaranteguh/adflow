@@ -15,6 +15,10 @@ PARTNER ──(ak_live_ key)──► ADFLOW ──(client token, AdFlow app)─
    └──────── { ok, data } ◄─────┴──────────── raw Meta response ◄─────┘
 ```
 
+> 🤖 **Not a coder?** Copy the prompt in [MARKETING-AI-PROMPT.md](../MARKETING-AI-PROMPT.md) into
+> ChatGPT/Claude/Cursor — it knows this whole API and only ever builds **through AdFlow**, never
+> directly against Meta.
+
 ## Status legend
 Every endpoint is labelled so you never build against something that isn't live:
 

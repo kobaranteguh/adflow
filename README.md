@@ -18,6 +18,9 @@ billing is auto-charged to the **partner's** Stripe card.
 - **[docs/API-REFERENCE.md](docs/API-REFERENCE.md)** — combined endpoint reference, params, responses, curl examples
 - **[docs/META-POLICY.md](docs/META-POLICY.md)** — Meta compliance, Tech Provider status, rate limits, limitations
 
+### Not a coder?
+- **[docs/MARKETING-AI-PROMPT.md](docs/MARKETING-AI-PROMPT.md)** — copy-paste prompt for ChatGPT/Claude/Cursor; it knows the full Marketing API and only ever builds **through AdFlow** (never directly against Meta).
+
 ### Per-platform references
 - **[docs/api/MARKETING.md](docs/api/MARKETING.md)** — Meta Ads (full Full-Access parity)
 - **[docs/api/THREADS.md](docs/api/THREADS.md)** — Threads
