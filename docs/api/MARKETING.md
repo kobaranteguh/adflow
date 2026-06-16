@@ -91,34 +91,37 @@ its own connect flow. Wrong/expired onboarding state is rejected.
 
 `account_status` + `disable_reason` (in account detail) surface **ad-account restriction status**.
 
-## 8. Business assets  · *Planned*
-Business Manager, system users, asset permissions and business-verification status are **not yet
-exposed** as partner endpoints (enterprise roadmap; `business_management` held).
+## 8. Business assets  · *Available* (read) / *Planned* (system users)
+Business Manager read access is live (backed by `business_management`). `?accountId=` selects the
+client token. System-user token flow & asset-permission writes remain enterprise roadmap.
 
 | Method | Path | Status | Purpose |
 |---|---|---|---|
-| GET | `/business` | Planned | List businesses |
-| GET | `/business/{id}/assets` | Planned | Assets + permissions |
-| GET | `/business/system-users` | Planned | System user / token flow |
+| GET | `/ads/business?accountId=` | Available | List businesses (id, name, verification_status) |
+| GET | `/ads/business/{id}?accountId=` | Available | Business detail + owned ad accounts/pages/IG |
+| GET | `/ads/business/system-users` | Planned | System user / token flow |
 
-## 9. Pages  · *Planned* (selection) / *Available* (via Pages API)
-Selecting a Page for an ad creative needs the Page id. Listing the client's Pages via the **Ads**
-surface is **Planned** (the logic exists internally; the partner endpoint is being exposed). Full
-Page management lives in the separate **Pages API** doc.
+Business **verification status** is in the business detail/list (`verification_status`).
 
-| Method | Path | Status | Purpose |
-|---|---|---|---|
-| GET | `/ads/{accountId}/pages` | Planned | List Pages usable for ad creatives |
-
-Until live, pass a known `page_id` directly in a creative's `object_story_spec`.
-
-## 10. Instagram accounts  · *Planned* (selection) / *Available* (via Instagram API)
-Same as Pages: listing IG business accounts for ad placement via the Ads surface is **Planned**
-(internal logic exists). Pass a known `instagram_actor_id` in the creative meanwhile.
+## 9. Pages  · *Available*
+List the client's Pages to select one for an ad creative (page-backed posts, lead ads, Messenger
+ads). Full Page management (posts, comments, Messenger) lives in the separate **Pages API** doc.
 
 | Method | Path | Status | Purpose |
 |---|---|---|---|
-| GET | `/ads/{accountId}/instagram-accounts` | Planned | List IG business accounts for ads |
+| GET | `/ads/{accountId}/pages` | Available | List Pages usable for ad creatives (id, name, picture) |
+
+Use the returned `id` as `page_id` in a creative's `object_story_spec`.
+
+## 10. Instagram accounts  · *Available*
+List IG business accounts for ad placement. With `?pageId=` returns the IG accounts connected to
+that Page; without, the IG accounts available to the ad account.
+
+| Method | Path | Status | Purpose |
+|---|---|---|---|
+| GET | `/ads/{accountId}/instagram-accounts[?pageId=]` | Available | List IG business accounts for ads |
+
+Use the returned `id` as `instagram_actor_id` in a creative.
 
 ## 11. Campaigns  · *Available*
 | Method | Path | Status | Purpose |
@@ -177,8 +180,8 @@ curl -X POST "https://adflowapps.com/api/v1/ads/act_123/images" \
 |---|---|---|---|
 | GET | `/ads/pages/{pageId}/lead-forms?accountId=` | Available | List lead-gen forms on a Page |
 | GET | `/ads/lead-forms/{id}/leads?accountId=` | Available | Retrieve leads (`?since=&until=`) |
-| GET | `/ads/lead-forms/{id}?accountId=` | Planned | Read full form field schema |
-| POST | `/ads/pages/{pageId}/lead-forms?accountId=` | Planned | Create a lead form |
+| GET | `/ads/lead-forms/{id}?accountId=` | Available | Read full form field schema (questions, context card, privacy URL) |
+| POST | `/ads/pages/{pageId}/lead-forms?accountId=` | Planned | Create a lead form (needs `pages_manage_ads` — pending review) |
 | — | test lead / CRM mapping / dedup | Planned | (dedup is your side, via lead `id`) |
 
 Real-time leads: see **Webhooks** (§21) — `leadgen` events relay to your webhook. Requires
@@ -207,7 +210,7 @@ Customer-file PII is **SHA-256 hashed** (by you, or by AdFlow with `hash:true`) 
 | GET/POST | `/ads/{accountId}/custom-conversions` | Available | List / create custom conversion |
 | GET/POST | `/ads/{accountId}/offline-sets` | Available | List / create offline conversion data set |
 | POST | `/ads/offline-sets/{id}/events?accountId=` | Available | Upload offline events `{ data, upload_tag? }` |
-| GET | `/ads/pixels/{id}/diagnostics?accountId=` | Planned | Event match quality / diagnostics |
+| GET | `/ads/pixels/{id}/diagnostics?accountId=` | Available | Pixel diagnostics (availability, automatic matching, data-use, cookie status) |
 
 - CAPI is enabled by `ads_read` (Server-Side API). Use `test_event_code` to validate in Events Manager.
 - **Event deduplication** is your responsibility: send a stable `event_id` on both pixel and CAPI events.
@@ -303,7 +306,7 @@ Which Meta permission backs each area (all held by AdFlow unless noted):
 | List Pages, page-backed creatives | `pages_show_list`, `pages_read_engagement` | Held |
 | Instagram-positioned ads | `instagram_basic` | Held |
 | Lead ads retrieval | `leads_retrieval` | Held |
-| Business/asset/system-user management (§8) | `business_management` | Held — endpoints Planned |
+| Business read (list/detail/assets), Page & IG selection | `business_management`, `pages_show_list`, `instagram_basic` | Held — read endpoints Available; system-user writes Planned |
 | Catalog / product ads (§19) | `catalog_management` | **Pending review** — endpoints Planned |
 
 Marketing API Access Tier: **Full access** (unlimited ad accounts, high rate limits, Business
@@ -316,9 +319,12 @@ Manager API).
 
 | Date | Change |
 |---|---|
+| 2026-06-17 | **Asset & business read release.** Promoted to Available: Page selection (`/ads/{acc}/pages`), IG account selection (`/ads/{acc}/instagram-accounts`), lead-form schema (`/ads/lead-forms/{id}`), pixel diagnostics (`/ads/pixels/{id}/diagnostics`), business list/detail (`/ads/business`, `/ads/business/{id}`). All within our Full Access permissions. |
 | 2026-06-17 | **Full Access parity release.** Added account detail/funding/spend-cap; full update + delete for campaign/ad set/ad; creatives + image/video upload + preview; audiences (lookalike/website/engagement/custom + hashed member upload + delete); reach-estimate + targeting search/validate; raw + async insights; pixel create/health + **Conversions API** + custom & offline conversions; lead form + lead retrieval; `leadgen` webhook. |
 | (earlier) | Initial release: campaigns, ad sets, ads, audiences, pixels, account insights. |
 
-**Roadmap (Planned):** Page/IG selection endpoints, lead form create + test, pixel diagnostics,
-cursor pagination, report export/scheduling, Catalog/product ads (after `catalog_management`
-approval), Business/asset/system-user management.
+**Roadmap (Planned — permission/architecture gated):**
+- **Catalog / product ads** — after `catalog_management` review approval.
+- **Lead form create + test lead** — needs `pages_manage_ads` (pending review).
+- **System-user token flow & asset-permission writes** — enterprise.
+- **Cursor pagination, report export (CSV), scheduled reports** — architecture, not permission.
