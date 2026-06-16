@@ -1,49 +1,51 @@
-# AdFlow Partner SDK
+# AdFlow Partner API
 
-One official SDK per language for the **AdFlow bridge** (`/api/v1`) — covering **Meta Marketing
-(Ads), Threads, and free Facebook Pages & Instagram** in a single package. You pay AdFlow only for
-the ad-account / Threads **slots you enable** (Pages & IG are free); billing is auto-charged to the
-**partner's** Stripe card.
+Official REST API for **AdFlow** (`/api/v1`) — manage your clients' **Meta Marketing (Ads),
+Threads, and free Facebook Pages & Instagram** through AdFlow. **No SDK to install** — call the
+REST API directly with your `ak_live_…` key from any language.
 
-| Language | Folder | Package | Install |
-| -------- | ------ | ------- | ------- |
-| Node.js  | `node`   | `@adflow/sdk`  | `npm install @adflow/sdk` |
-| PHP      | `php`    | `adflow/sdk`   | `composer require adflow/sdk` |
-| Python   | `python` | `adflow-sdk`   | `pip install adflow-sdk` |
+AdFlow holds **Meta Marketing API Full Access**, so you get full parity (campaigns, ad sets, ads,
+creatives, media, audiences, targeting, insights, pixels, Conversions API, lead ads, …) **without
+doing your own Meta App Review**. AdFlow is the proxy: Meta only sees AdFlow's domain; we forward
+your call with the client's token and return Meta's raw response.
+
+You pay AdFlow only for the **ad-account / Threads slots you enable** (Pages & Instagram are free);
+billing is auto-charged to the **partner's** Stripe card.
 
 ## 📚 Documentation
 
-- **[docs/PARTNER-GUIDE.md](docs/PARTNER-GUIDE.md)** — start here: concepts, onboarding, SDK usage, billing, webhooks, FAQ
-- **[docs/API-REFERENCE.md](docs/API-REFERENCE.md)** — every endpoint, params, responses, curl examples
-- **[docs/META-POLICY.md](docs/META-POLICY.md)** — Meta compliance, verified Tech Provider status, rate limits, limitations
+- **[docs/PARTNER-GUIDE.md](docs/PARTNER-GUIDE.md)** — start here: concepts, onboarding clients, billing, webhooks, FAQ
+- **[docs/API-REFERENCE.md](docs/API-REFERENCE.md)** — combined endpoint reference, params, responses, curl examples
+- **[docs/META-POLICY.md](docs/META-POLICY.md)** — Meta compliance, Tech Provider status, rate limits, limitations
 
-## SDK surface
+### Per-platform references
+- **[docs/api/MARKETING.md](docs/api/MARKETING.md)** — Meta Ads (full Full-Access parity)
+- **[docs/api/THREADS.md](docs/api/THREADS.md)** — Threads
+- **[docs/api/PAGES.md](docs/api/PAGES.md)** — Facebook Pages (free)
+- **[docs/api/INSTAGRAM.md](docs/api/INSTAGRAM.md)** — Instagram (free)
 
-Same shape in every language — one `AdFlow` client:
-- `new AdFlow({ apiKey })` — Bearer auth with an `ak_live_…` key (Developer → API Access).
-- `.clients` — reseller onboarding: `create({displayName})` → `onboardUrl` to share with the client.
-- `.account(actId)` — Ads (campaigns, ad sets, ads, insights, audiences, pixels).
-- `.profile(threadsId)` — Threads (publish, posts, insights).
-- `.page(pageId)` — Facebook Pages (free).
-- `.instagram(igId)` — Instagram (free): publish, comments, insights, DMs.
-- `.request(method, path, …)` — escape hatch for any `/api/v1` endpoint.
-- Errors throw `AdFlowError` with `.code` + `.status`.
+## Quick start
 
-## Publishing to GitHub (push later)
-
-Each folder is a standalone package → its own repo. From a package folder:
+- **Base URL:** `https://adflowapps.com/api/v1`
+- **Auth:** `Authorization: Bearer ak_live_…` (Developer → API Access)
+- **Envelope:** success → `{ "ok": true, "data": … }`; error → `{ "ok": false, "error": { "code", "message" } }`
+- **Rate limit:** 120 requests / minute per key
 
 ```bash
-cd node
-git init && git add . && git commit -m "v0.1.0"
-git branch -M main
-git remote add origin https://github.com/<org>/sdk-node.git
-git push -u origin main
-git tag v0.1.0 && git push --tags
+# 1) Onboard a client — share the returned link with them to authorise
+curl -X POST https://adflowapps.com/api/v1/clients \
+  -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json" \
+  -d '{ "displayName": "Kedai ABC" }'
+# → { "ok": true, "data": { "id": "...", "onboardUrl": "https://adflowapps.com/connect/..." } }
+
+# 2) After they authorise and you enable an ad account, list what you can operate on
+curl https://adflowapps.com/api/v1/ads/accounts -H "Authorization: Bearer ak_live_..."
+
+# 3) Create a paused campaign
+curl -X POST https://adflowapps.com/api/v1/ads/act_1234567890/campaigns \
+  -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json" \
+  -d '{ "name": "Ramadan Sale", "objective": "OUTCOME_TRAFFIC", "status": "PAUSED" }'
 ```
 
-Suggested repo names: `sdk-node`, `sdk-php`, `sdk-python`. Then publish:
-`npm publish --access public` (needs the `@adflow` npm org), Packagist (PHP), `twine upload` (Python).
-
-> Status: **v0.1.0**, built & lint-clean (Node loads, `php -l` clean, `py_compile` clean).
-> Not yet pushed — awaiting GitHub org/credentials.
+Need an endpoint not shown? Every Meta Marketing object is reachable — see
+**[docs/api/MARKETING.md](docs/api/MARKETING.md)**.
