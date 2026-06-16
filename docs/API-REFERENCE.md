@@ -8,8 +8,8 @@ Provider**) to call the Meta Graph API on behalf of your onboarded clients and r
 - **Auth header:** `Authorization: Bearer ak_live_…`
 - **Content type:** `application/json`
 
-> SDKs (recommended): `@adflow/sdk` (Node) · `adflow/sdk` (PHP) · `adflow-sdk` (Python) — see
-> [PARTNER-GUIDE.md](./PARTNER-GUIDE.md). This doc is the raw HTTP contract behind them.
+> **No SDK** — this is a plain REST API; call it directly from any language. See
+> [PARTNER-GUIDE.md](./PARTNER-GUIDE.md) for a quickstart and [api/](./api/) for per-platform references.
 
 ---
 
@@ -74,7 +74,7 @@ Fetch one client (+ resources) / remove a client and its resources.
 
 ## Ads (Meta Marketing API)
 
-Paid: each enabled ad account = 1 slot ($2/mo). Scope: `account('act_123')` in SDKs.
+Paid: each enabled ad account = 1 slot ($2/mo). Path scope: `/ads/act_123/…`.
 
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |
@@ -112,7 +112,7 @@ curl -X POST https://adflowapps.com/api/v1/ads/act_123/campaigns \
 
 ## Threads
 
-Paid: each enabled Threads profile = 1 slot ($1/mo). Scope: `profile('178…')` in SDKs.
+Paid: each enabled Threads profile = 1 slot ($1/mo). Path scope: `/threads/178…/…`.
 
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |
@@ -139,7 +139,7 @@ curl -X POST https://adflowapps.com/api/v1/threads/17841400000000000/posts \
 
 ## Facebook Pages (free)
 
-Free for any partner with ≥1 paid platform. Scope: `page('123')` in SDKs.
+Free for any partner with ≥1 paid platform. Path scope: `/pages/123/…`.
 
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |
@@ -191,7 +191,7 @@ function verify(rawBody, header, secret) {
 ## Instagram
 
 Free for any partner with ≥1 paid platform. IG accounts import automatically when a client connects a
-Facebook Page with a linked IG Business account. Scope: `instagram('178…')` in SDKs.
+Facebook Page with a linked IG Business account. Path scope: `/instagram/178…/…`.
 
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |

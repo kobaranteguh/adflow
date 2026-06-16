@@ -5,9 +5,11 @@ Build Meta-powered features into your product — Facebook Ads, Threads, Faceboo
 its app is a Meta-verified Tech Provider, and you operate your clients' Meta accounts through it.
 
 ```
-Your system  →  AdFlow API (Bearer ak_live_…)  →  Meta Graph API
+Your system  →  AdFlow REST API (Bearer ak_live_…)  →  Meta Graph API
                 AdFlow injects the client's token + its approved app
 ```
+
+**No SDK required** — call the REST API directly from any language.
 
 ---
 
@@ -29,64 +31,59 @@ Developer → **API Access** → Create. Copy the `ak_live_…` key (shown once)
 
 ### Step 2 — Onboard a client
 Create a client and share its connect link:
-```js
-const { AdFlow } = require('@adflow/sdk');
-const adflow = new AdFlow({ apiKey: process.env.ADFLOW_API_KEY });
-
-const client = await adflow.clients.create({ displayName: 'Kedai ABC' });
-// Send client.onboardUrl to your client (email, in-app, etc.)
+```bash
+curl -X POST https://adflowapps.com/api/v1/clients \
+  -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json" \
+  -d '{ "displayName": "Kedai ABC" }'
+# → { "ok": true, "data": { "id": "...", "onboardUrl": "https://adflowapps.com/connect/..." } }
 ```
-Your client opens the link (no AdFlow login needed), picks what to connect (Ads / Pages & Instagram /
-Threads), and authorises with Meta. Their resources import automatically under the client.
+Send `onboardUrl` to your client. They open it (no AdFlow login needed), pick what to connect
+(Ads / Pages & Instagram / Threads), and authorise with Meta. Their resources import automatically.
 
 ### Step 3 — Enable resources
 In Developer → API Access → Clients, toggle each resource on. Ads/Threads buy a slot (invoiced to
 your card immediately); Pages/IG are free.
 
 ### Step 4 — Call the API
-```js
-// Ads
-await adflow.account('act_123').createCampaign({ name: 'Q3', objective: 'OUTCOME_TRAFFIC', status: 'PAUSED' });
-const stats = await adflow.account('act_123').insights({ date_preset: 'last_30d', breakdown: 'platform' });
+```bash
+# Ads — create a campaign
+curl -X POST https://adflowapps.com/api/v1/ads/act_123/campaigns \
+  -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json" \
+  -d '{ "name": "Q3", "objective": "OUTCOME_TRAFFIC", "status": "PAUSED" }'
 
-// Threads
-await adflow.profile('17841400000000000').publish({ mediaType: 'TEXT', text: 'Hello' });
+# Ads — insights
+curl "https://adflowapps.com/api/v1/ads/act_123/insights?date_preset=last_30d&breakdown=platform" \
+  -H "Authorization: Bearer ak_live_..."
 
-// Pages (free)
-await adflow.page('1029384').createPost({ message: 'Hi' });
+# Threads — publish
+curl -X POST https://adflowapps.com/api/v1/threads/17841400000000000/posts \
+  -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json" \
+  -d '{ "media_type": "TEXT", "text": "Hello" }'
+
+# Pages (free) — publish
+curl -X POST https://adflowapps.com/api/v1/pages/1029384/posts \
+  -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json" \
+  -d '{ "message": "Hi" }'
 ```
 
 ---
 
-## 3. SDKs
+## 3. The REST API
 
-| Language | Install | Client |
-| -------- | ------- | ------ |
-| Node.js  | `npm install @adflow/sdk` | `new AdFlow({ apiKey })` |
-| PHP      | `composer require adflow/sdk` | `new AdFlow\Sdk\AdFlow(['apiKey' => …])` |
-| Python   | `pip install adflow-sdk` | `AdFlow(api_key="…")` |
+No client library to install — every endpoint is plain HTTPS + a Bearer key, callable from any
+language (`fetch`, `curl`, Guzzle, `requests`, …). Conventions:
 
-Every SDK exposes the same surface:
-- `clients` — `create({displayName})` → `onboardUrl`, `list()`, `get(id)`, `delete(id)`
-- `account(adAccountId)` — campaigns, ad sets, ads, insights, audiences, pixels
-- `profile(threadsId)` — publish, posts, insights
-- `page(pageId)` — posts, comments, conversations, insights (free)
-- `request(method, path, …)` — escape hatch for any endpoint
-- Errors throw `AdFlowError` with `.code` + `.status`.
+- **Base URL:** `https://adflowapps.com/api/v1`
+- **Auth:** `Authorization: Bearer ak_live_…`
+- **Envelope:** success → `{ "ok": true, "data": … }`; error → `{ "ok": false, "error": { "code", "message" } }`
+- **Routing key** = the Meta object id in the path: `/ads/{adAccountId}`, `/threads/{profileId}`,
+  `/pages/{pageId}`, `/instagram/{igId}`.
+- **Pagination** (lists): add `?paginate=1` or `?after=<cursor>` → `{ items, paging: { after, has_next } }`.
 
-**PHP**
-```php
-use AdFlow\Sdk\AdFlow;
-$adflow = new AdFlow(['apiKey' => getenv('ADFLOW_API_KEY')]);
-$adflow->account('act_123')->createCampaign(['name'=>'Q3','objective'=>'OUTCOME_TRAFFIC','status'=>'PAUSED']);
-```
-
-**Python**
-```python
-from adflow_sdk import AdFlow
-adflow = AdFlow(api_key="ak_live_…")
-adflow.account("act_123").create_campaign(name="Q3", objective="OUTCOME_TRAFFIC", status="PAUSED")
-```
+Full endpoint references per platform:
+- [Marketing API (Ads)](./api/MARKETING.md) — campaigns, ad sets, ads, creatives, media, audiences,
+  targeting, insights, pixels, Conversions API, lead ads, scheduled reports
+- [Threads](./api/THREADS.md) · [Facebook Pages](./api/PAGES.md) · [Instagram](./api/INSTAGRAM.md)
 
 ---
 
@@ -115,18 +112,14 @@ you. With many clients/systems, events never cross owners.
 
 ## 6. Errors & rate limits
 
-- `AdFlowError.code`: `unauthorized`, `slot_required`, `api_not_enabled`, `rate_limited`,
-  `not_found`, `bad_request`, `upstream_error`.
-- 120 req/min per key (AdFlow). Handle `rate_limited` with backoff (`Retry-After`).
+- `error.code`: `unauthorized`, `slot_required`, `api_not_enabled`, `rate_limited`, `not_found`,
+  `bad_request`, `upstream_error`. Full table in [API-REFERENCE.md](./API-REFERENCE.md).
+- 120 req/min per key (AdFlow). On `429 rate_limited`, back off and retry.
 - Meta's own limits apply globally to AdFlow's app — see [META-POLICY.md](./META-POLICY.md).
 
-```js
-const { AdFlowError } = require('@adflow/sdk');
-try { await adflow.account('act_1').campaigns(); }
-catch (e) {
-  if (e instanceof AdFlowError && e.code === 'rate_limited') { /* wait & retry */ }
-  else throw e;
-}
+```jsonc
+// HTTP 429
+{ "ok": false, "error": { "code": "rate_limited", "message": "Slow down — 120 req/min per key." } }
 ```
 
 ---
@@ -138,10 +131,13 @@ catch (e) {
 **Does Meta see my system?** No. Meta sees AdFlow's app acting for the client's account. Your API key
 is internal to AdFlow.
 
+**Is there an SDK?** No — it's a plain REST API; call it directly from any language. (No npm/Composer/
+pip package to install or keep updated.)
+
 **Can I manage many clients with one key?** Yes — that's the model. Each client onboards once; the
 object id routes every call/webhook to the right client.
 
 **What about Instagram / TikTok?** Pages-linked IG imports free today; standalone IG & TikTok
-endpoints are coming soon.
+endpoints are on the roadmap.
 
 See also: [API-REFERENCE.md](./API-REFERENCE.md) · [META-POLICY.md](./META-POLICY.md)
