@@ -17,6 +17,7 @@ billing is auto-charged to the **partner's** Stripe card.
 - **[docs/PARTNER-GUIDE.md](docs/PARTNER-GUIDE.md)** — start here: concepts, onboarding clients, billing, webhooks, FAQ
 - **[docs/API-REFERENCE.md](docs/API-REFERENCE.md)** — combined endpoint reference, params, responses, curl examples
 - **[docs/META-POLICY.md](docs/META-POLICY.md)** — Meta compliance, Tech Provider status, rate limits, limitations
+- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** — what changed / was fixed, newest first
 
 ### Not a coder?
 - **[docs/MARKETING-AI-PROMPT.md](docs/MARKETING-AI-PROMPT.md)** — copy-paste prompt for ChatGPT/Claude/Cursor; it knows the full Marketing API and only ever builds **through AdFlow** (never directly against Meta).
