@@ -66,8 +66,15 @@ You manage the Meta accounts of your end-clients. Onboard a client once; their a
 |---|---|---|---|
 | POST | `/clients` | Available | Create a client → returns `onboardUrl` to share |
 | GET | `/clients` | Available | List clients + their resources |
-| GET | `/clients/{id}` | Available | Client detail |
+| GET | `/clients/{id}` | Available | Client detail + resources (each with `id`, `metaId`, `apiEnabled`) |
 | DELETE | `/clients/{id}` | Available | Remove a client (revokes access) |
+| POST | `/clients/{id}/resources/{rid}/enable` | Available | Enable a resource for your key (no dashboard needed) |
+| POST | `/clients/{id}/resources/{rid}/disable` | Available | Disable a resource |
+
+Imported resources start `apiEnabled: false`. Enable them programmatically with the endpoint above
+(`{rid}` is the resource `id` from `GET /clients/{id}`) — no dashboard toggle required. Body
+`{ "autoBuy": true }` buys a paid slot immediately when billing is live; during the free beta enabling
+always succeeds at no cost (`charged: false`).
 
 ```bash
 curl -X POST https://adflowapps.com/api/v1/clients \

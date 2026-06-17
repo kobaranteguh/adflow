@@ -49,11 +49,15 @@ Flow:  my system → AdFlow REST API (my key) → Meta Graph API → AdFlow → 
 
 === ONBOARDING A CLIENT (do this before operating on a client) ===
 POST   /clients                       body { displayName }  -> { id, onboardUrl }  ([Available])
-GET    /clients                       list clients + resources                     ([Available])
-GET    /clients/{id}                  client detail                                ([Available])
+GET    /clients                       list clients + resources (id, metaId, apiEnabled) ([Available])
+GET    /clients/{id}                  client detail + resources                    ([Available])
 DELETE /clients/{id}                  remove client (revokes access)               ([Available])
-Share onboardUrl with the client; they authorise with Meta; then I enable their ad account
-(buys a $2/mo slot). A call to a non-enabled account returns api_not_enabled.
+POST   /clients/{id}/resources/{rid}/enable    enable a resource for the API (body { autoBuy? }) ([Available])
+POST   /clients/{id}/resources/{rid}/disable   disable a resource                  ([Available])
+Full programmatic flow (no dashboard): create client -> share onboardUrl -> after they authorise,
+GET /clients/{id} to read the imported resources (apiEnabled:false) -> POST .../resources/{rid}/enable
+to activate each one. {rid} is the resource "id". A call to a non-enabled resource returns
+api_not_enabled. (Enabling is free during the beta; { autoBuy:true } buys a slot when billing is live.)
 
 === MARKETING ENDPOINTS (Available unless noted) ===
 # Ad accounts
