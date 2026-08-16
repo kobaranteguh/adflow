@@ -97,99 +97,26 @@ Fetch one client (+ resources) / remove a client and its resources.
 
 ---
 
-## Ads (Meta Marketing API)
+## Platforms — per-platform references
 
-Paid: each enabled ad account = 1 slot ($3/mo). Path scope: `/ads/act_123/…`.
+Every endpoint, request body, response shape and platform-specific limit lives in its own document.
+They are the source of truth; this page carries only what is shared across all of them.
 
-| Method | Endpoint | Purpose |
-| ------ | -------- | ------- |
-| GET | `/ads/accounts` | List your API-enabled ad accounts |
-| GET | `/ads/{accountId}/campaigns?date_preset=last_30d&status=ACTIVE` | Campaigns + insights |
-| POST | `/ads/{accountId}/campaigns` | Create campaign |
-| POST | `/ads/campaigns/{id}?accountId=…` | Update campaign status |
-| DELETE | `/ads/campaigns/{id}?accountId=…` | Delete campaign |
-| GET | `/ads/{accountId}/adsets?campaignId=…` | Ad sets for a campaign |
-| POST | `/ads/{accountId}/adsets` | Create ad set (AdSetConfig) |
-| POST | `/ads/adsets/{id}?accountId=…` | Update ad set status / dailyBudget |
-| GET | `/ads/{accountId}/ads?adSetId=…` | Ads (by ad set, or account-wide) |
-| POST | `/ads/{accountId}/ads` | Create ad (AdCreativeConfig + adName, adSetId, format) |
-| POST | `/ads/ads/{id}?accountId=…` | Update ad status |
-| GET | `/ads/{accountId}/insights?breakdown=platform|age_gender|country|placement|device&time_increment=1` | Insights + breakdowns |
-| GET | `/ads/{accountId}/audiences` | List custom audiences |
-| POST | `/ads/{accountId}/audiences` | Create audience (`type`: engagement/website/lookalike) |
-| GET | `/ads/{accountId}/pixels` | List pixels |
-| GET | `/ads/pixels/{id}/stats?accountId=…` | Pixel event stats |
+| Platform | Reference | Billing | Path scope |
+| -------- | --------- | ------- | ---------- |
+| Meta Ads | [api/MARKETING.md](./api/MARKETING.md) | $3/mo per enabled ad account | `/ads/act_123/…` |
+| Threads | [api/THREADS.md](./api/THREADS.md) | $3/mo per enabled profile | `/threads/178…/…` |
+| Facebook Pages | [api/PAGES.md](./api/PAGES.md) | Free with ≥1 paid platform | `/pages/123/…` |
+| Instagram | [api/INSTAGRAM.md](./api/INSTAGRAM.md) | Free with ≥1 paid platform | `/instagram/178…/…` |
+| TikTok | — | — | not yet exposed; on the roadmap |
 
-**Create campaign — example**
-```bash
-curl -X POST https://adflowapps.com/api/v1/ads/act_123/campaigns \
-  -H "Authorization: Bearer ak_live_…" -H "Content-Type: application/json" \
-  -d '{"name":"Q3 Launch","objective":"OUTCOME_TRAFFIC","status":"PAUSED"}'
-# → { "ok": true, "data": { "id": "238…" } }
-```
+Threads, Pages and Instagram share a single slot pool — one slot holds any one of them, and is
+reusable across them once freed. Ad accounts have their own pool.
 
-**Create audience — body shapes**
-- engagement: `{ "type":"engagement", "name":"…", "pageId":"…", "engagementType":"…", "retentionDays":365 }`
-- website: `{ "type":"website", "name":"…", "pixelId":"…", "retentionDays":30 }`
-- lookalike: `{ "type":"lookalike", "name":"…", "sourceAudienceId":"…", "country":"MY", "ratio":0.01 }`
-
----
-
-## Threads
-
-Paid: each enabled Threads profile = 1 slot ($3/mo). Path scope: `/threads/178…/…`.
-
-| Method | Endpoint | Purpose |
-| ------ | -------- | ------- |
-| GET | `/threads/{profileId}` | Profile identity — username, name, picture, bio. **No counts** |
-| GET | `/threads/{profileId}/posts?limit=25` | Recent posts |
-| POST | `/threads/{profileId}/posts` | Publish |
-| GET | `/threads/{profileId}/comments?since=…` | All comments across every post, one call |
-| GET | `/threads/{profileId}/insights?days=7` | Views, likes, replies, reposts + **`followerCount`** |
-| GET | `/threads/{profileId}/limits` | Live post / reply / delete quotas |
-| GET | `/threads/{profileId}/replies` | Replies this profile has sent |
-| GET | `/threads/posts/{id}?profileId=…` | One post by id |
-| GET | `/threads/posts/{id}/insights?profileId=…` | Post insights |
-
-> Follower count is on `/insights`, **not** on the profile endpoint — and `days` defaults to **7**,
-> not 30. Both are easy to get wrong silently. See
-> [THREADS.md](./api/THREADS.md#profile-insights).
-
-**Publish — body**
-```json
-{ "mediaType": "TEXT|IMAGE|VIDEO|CAROUSEL|POLL", "text": "…",
-  "mediaUrls": [{ "url": "https://…", "type": "image" }],
-  "pollOptions": ["A","B"], "pollDuration": 24, "replyToId": "…" }
-```
-```bash
-curl -X POST https://adflowapps.com/api/v1/threads/17841400000000000/posts \
-  -H "Authorization: Bearer ak_live_…" -H "Content-Type: application/json" \
-  -d '{"mediaType":"TEXT","text":"Hello from AdFlow"}'
-```
-> Meta limits: cannot delete published posts; 250 posts / 1,000 replies per 24h per profile.
-
----
-
-## Facebook Pages (free)
-
-Free for any partner with ≥1 paid platform. Path scope: `/pages/123/…`.
-
-| Method | Endpoint | Purpose |
-| ------ | -------- | ------- |
-| GET | `/pages/{pageId}/posts?limit=25` | List posts |
-| POST | `/pages/{pageId}/posts` | Create post `{ message, link?, scheduledPublishTime? }` |
-| DELETE | `/pages/posts/{id}?pageId=…` | Delete a post the app published |
-| GET | `/pages/posts/{id}/comments?pageId=…` | List comments |
-| GET | `/pages/posts/{id}/insights?pageId=…` | Post insights |
-| POST | `/pages/comments/{id}?pageId=…` | Reply to comment `{ message }` |
-| DELETE | `/pages/comments/{id}?pageId=…` | Delete comment |
-| GET | `/pages/{pageId}/insights?period=day|week|days_28` | Page insights |
-| GET | `/pages/{pageId}/conversations?limit=25` | Messenger conversations |
-| GET | `/pages/conversations/{id}/messages?pageId=…` | Conversation messages |
-| POST | `/pages/conversations/{id}/messages?pageId=…` | Send message (24h window) |
-
-> Meta limits: an app can only edit/delete posts it published; Messenger send must be within the
-> 24-hour standard messaging window.
+**Do not infer one platform's behaviour from another's.** Response shapes differ in ways that look
+like typos but are not: endpoints that proxy a Meta object keep Meta's `snake_case` field names,
+while endpoints where AdFlow computes the numbers use `camelCase`. Field names, defaults and limits
+are documented per platform because they genuinely differ per platform.
 
 ---
 
@@ -218,32 +145,3 @@ function verify(rawBody, header, secret) {
   return crypto.timingSafeEqual(Buffer.from(header), Buffer.from(expected));
 }
 ```
-
----
-
-## Instagram
-
-Free for any partner with ≥1 paid platform. IG accounts import automatically when a client connects a
-Facebook Page with a linked IG Business account. Path scope: `/instagram/178…/…`.
-
-| Method | Endpoint | Purpose |
-| ------ | -------- | ------- |
-| GET | `/instagram/{igId}/media?limit=25` | List media |
-| POST | `/instagram/{igId}/media` | Publish `{ mediaType:"IMAGE"|"VIDEO"|"REELS"|"STORIES", imageUrl?, videoUrl?, caption? }` (2-step container→publish, handled server-side) |
-| GET | `/instagram/{igId}/insights?since=&until=` | Account insights |
-| GET | `/instagram/media/{id}/insights?igId=&mediaType=` | Media insights |
-| GET | `/instagram/media/{id}/comments?igId=` | List comments |
-| POST | `/instagram/media/{id}/comments?igId=` | Comment `{ message }` |
-| POST | `/instagram/comments/{id}?igId=` | Reply `{ message }` or hide `{ hidden: true/false }` |
-| DELETE | `/instagram/comments/{id}?igId=` | Delete comment |
-| GET | `/instagram/{igId}/conversations?limit=20` | DM conversations |
-| GET | `/instagram/conversations/{id}/messages?igId=` | Messages |
-| POST | `/instagram/conversations/{id}/messages?igId=` | Send DM `{ recipientId, message }` (24h window) |
-
-> Meta limits: cannot delete published media or edit captions; DM sending only within the human-agent
-> window. Some `instagram_business_*` permissions are pending App Review — partner access opens once
-> Advanced Access is granted.
-
-## TikTok
-
-Not yet exposed — on the roadmap.
