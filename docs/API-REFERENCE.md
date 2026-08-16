@@ -141,11 +141,19 @@ Paid: each enabled Threads profile = 1 slot ($3/mo). Path scope: `/threads/178�
 
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |
-| GET | `/threads/{profileId}` | Profile info |
+| GET | `/threads/{profileId}` | Profile identity — username, name, picture, bio. **No counts** |
 | GET | `/threads/{profileId}/posts?limit=25` | Recent posts |
 | POST | `/threads/{profileId}/posts` | Publish |
-| GET | `/threads/{profileId}/insights` | Account insights |
+| GET | `/threads/{profileId}/comments?since=…` | All comments across every post, one call |
+| GET | `/threads/{profileId}/insights?days=7` | Views, likes, replies, reposts + **`followerCount`** |
+| GET | `/threads/{profileId}/limits` | Live post / reply / delete quotas |
+| GET | `/threads/{profileId}/replies` | Replies this profile has sent |
+| GET | `/threads/posts/{id}?profileId=…` | One post by id |
 | GET | `/threads/posts/{id}/insights?profileId=…` | Post insights |
+
+> Follower count is on `/insights`, **not** on the profile endpoint — and `days` defaults to **7**,
+> not 30. Both are easy to get wrong silently. See
+> [THREADS.md](./api/THREADS.md#profile-insights).
 
 **Publish — body**
 ```json

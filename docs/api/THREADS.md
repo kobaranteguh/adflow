@@ -11,7 +11,7 @@ Publish to and manage your clients' Threads profiles — posts, replies, mention
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/threads/{profileId}` | Profile details (username, picture, counts) |
+| GET | `/threads/{profileId}` | Profile identity: username, name, picture, bio. **No counts** — see `/insights` |
 | GET | `/threads/{profileId}/posts` | List the profile's posts |
 | GET | `/threads/{profileId}/comments` | **All comments across every post, one call** |
 | GET | `/threads/{profileId}/replies` | Replies this profile has **sent** |
@@ -24,7 +24,7 @@ Publish to and manage your clients' Threads profiles — posts, replies, mention
 | POST | `/threads/posts/{id}/replies` | Reply to a post |
 | POST | `/threads/replies/{id}` | Hide / unhide a reply |
 | GET | `/threads/{profileId}/mentions` | Posts that mention the profile |
-| GET | `/threads/{profileId}/insights` | Profile-level insights |
+| GET | `/threads/{profileId}/insights` | Views, likes, replies, reposts **and follower count** |
 
 **Note:** endpoints under `/threads/posts/{id}/*` and `/threads/replies/{id}` need a `?profileId=` query param — it tells AdFlow which onboarded profile's token to use (e.g. `/threads/posts/{postId}/replies?profileId={profileId}`).
 
@@ -151,6 +151,74 @@ that traffic and will drift.
 
 The window is **rolling**: a slot frees exactly 24h after the call that used it, gradually through
 the day. There is no midnight reset to schedule against.
+
+## Profile identity
+
+```
+GET /threads/{profileId}
+```
+
+```json
+{ "ok": true,
+  "data": {
+    "id": "27513676534961313",
+    "username": "geladikwani",
+    "name": "Adik Wani",
+    "threads_profile_picture_url": "https://scontent.cdninstagram.com/…",
+    "threads_biography": "beli gel adik awak.."
+  } }
+```
+
+> **Identity only — there is no follower count here, and there never has been.** Follower count,
+> views and engagement live in [`/threads/{profileId}/insights`](#profile-insights). Writing
+> `profile.followers_count` returns `undefined`; with a `?? 0` fallback it silently becomes `0`, and
+> a real account renders as "0 followers" with nothing in your logs pointing at the cause.
+
+These five fields are the complete response. Field names here are Meta's own (`snake_case`) because
+we pass Meta's profile object through unchanged.
+
+## Profile insights
+
+```
+GET /threads/{profileId}/insights?days=30
+```
+
+```json
+{ "ok": true,
+  "data": {
+    "totalViews": 17507,
+    "totalLikes": 139,
+    "totalReplies": 53,
+    "totalReposts": 0,
+    "followerCount": 7
+  },
+  "meta": { "days": 30 } }
+```
+
+| Param | Default | Notes |
+|---|---|---|
+| `days` | **7** | Trailing window, 1–729. **The default is 7, not 30** — omit it and you get a week's numbers, which look plausible and are wrong if you meant a month. On a real profile the same account returned 216 views at `days=7` and 17,507 at `days=30` |
+
+Meta retains Threads insights for the **last two years only**; a longer window is rejected by Meta
+outright rather than returned as zeros, so `days` is capped at 729. `meta.days` echoes the window
+actually used — check it rather than assuming your value was accepted.
+
+**`followerCount` is the current total**, not a per-period figure: it does not change with `days`.
+The other four are aggregates over the window — `totalViews` is a daily series summed, the rest are
+Meta's own totals for the same range.
+
+### A naming inconsistency worth knowing about
+
+Two response styles sit side by side, and guessing wrong is the most common integration mistake here:
+
+| Endpoint | Style | Example |
+|---|---|---|
+| `/threads/{profileId}` | Meta's `snake_case`, passed through untouched | `threads_profile_picture_url` |
+| `/threads/{profileId}/insights` | AdFlow's `camelCase`, computed by us | `followerCount`, `totalViews` |
+
+Both are correct and neither is changing — endpoints that proxy Meta's object keep Meta's names, and
+endpoints where we assemble the numbers use ours. Read the response shape rather than inferring it
+from a sibling endpoint.
 
 ## One post by id
 
