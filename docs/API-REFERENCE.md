@@ -55,10 +55,35 @@ sub-resources), `?profileId=` (Threads post insights).
 Create a client and get an onboarding link to share. The client opens it and authorises AdFlow's app;
 their ad accounts, Pages & Instagram import automatically.
 
-Body: `{ "displayName": "Kedai ABC", "externalRef": "optional-your-id" }`
+Body: `{ "displayName": "Kedai ABC", "externalRef": "optional-your-id", "returnUrl": "https://app.yourbrand.com/threads/connected", "platforms": ["threads"] }`
 ```json
-{ "ok": true, "data": { "id": "clt_…", "displayName": "Kedai ABC", "onboardUrl": "https://adflowapps.com/connect/obs_…" } }
+{ "ok": true, "data": { "id": "clt_…", "displayName": "Kedai ABC", "onboardUrl": "https://adflowapps.com/connect/obs_…", "reused": false } }
 ```
+
+**Send `externalRef`** — your own id for that client. The call is then idempotent: a repeat with the
+same `externalRef` returns the existing client (`reused: true`, status `200`) with a fresh
+`onboardUrl`, instead of creating a duplicate. Without it, every call creates a new client row, so a
+"Connect" button that fires on each click piles up hundreds of empty clients. A new client is created
+only when the ref is unknown (`reused: false`, status `201`). `displayName` is kept in sync on reuse.
+
+**Send `returnUrl`** — where to drop the client once they finish authorising. Without it they land on
+AdFlow's "Connected!" page and have to close the tab themselves, which breaks the illusion for
+white-label products. With it, they see the confirmation and are sent straight back to your app.
+
+- `https://` only; other schemes are ignored.
+- Any host is accepted — including your customers' own white-label domains.
+- The redirect carries no secrets, only `?success=true` or `?error=…`, so treat it as a UI hint and
+  confirm the actual result through `GET /clients`.
+
+**Send `platforms`** — the subset your product actually uses: any of `"ads"`, `"facebook"`
+(Pages & Instagram), `"threads"`. The connect page then offers only those. A Threads-only
+scheduler showing "Connect Facebook Ads" confuses the customer and advertises capabilities you
+do not ship.
+
+- Omit it (or send an empty list) and all configured platforms are offered — the previous
+  behaviour, unchanged.
+- It is per-link, not per-account: send `["threads"]` from your Connect-Threads button and
+  `["ads"]` from your Connect-Ads button, from the same key.
 
 ### `GET /clients`
 List your clients + their imported resources.
@@ -74,7 +99,7 @@ Fetch one client (+ resources) / remove a client and its resources.
 
 ## Ads (Meta Marketing API)
 
-Paid: each enabled ad account = 1 slot ($2/mo). Path scope: `/ads/act_123/…`.
+Paid: each enabled ad account = 1 slot ($3/mo). Path scope: `/ads/act_123/…`.
 
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |
@@ -112,7 +137,7 @@ curl -X POST https://adflowapps.com/api/v1/ads/act_123/campaigns \
 
 ## Threads
 
-Paid: each enabled Threads profile = 1 slot ($1/mo). Path scope: `/threads/178…/…`.
+Paid: each enabled Threads profile = 1 slot ($3/mo). Path scope: `/threads/178…/…`.
 
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |

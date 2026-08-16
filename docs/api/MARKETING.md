@@ -53,8 +53,10 @@ curl https://adflowapps.com/api/v1/ads/accounts -H "Authorization: Bearer ak_liv
 - Upstream Meta rate limits are absorbed by AdFlow's Full Access tier (9,000 points).
 
 ## 4. Billing  · *Available*
-- **$2 / active ad account / month** (+ processing fee). Threads **$1 / profile**. **Pages &
-  Instagram free.** No refund for partial months.
+- **$3 / active ad account / month** (+ processing fee). Threads **$3 / profile**, Facebook Pages
+  **$3 / Page**, Instagram **$3 / account**. No refund for partial months.
+- Two slot pools: ad accounts have their own; **Threads, Pages and Instagram share one pool** — a
+  single slot holds any one of those three, and is reusable across them once freed.
 - A call to a resource that isn't in an active slot → `403 api_not_enabled` (enable it to buy a
   slot) or `402 slot_required` / `402 billing_not_configured`.
 - Usage: `GET /v1/usage` returns slots, active ad-account ids, fee %, estimated monthly, calls.
@@ -300,19 +302,20 @@ Register a callback in **Developer → API Access → Webhooks**. AdFlow forward
 
 ## 24. Error codes  · *Available*
 Envelope: `{ "ok": false, "error": { "code": "...", "message": "..." } }`. `message` is Meta's own
-text on upstream failures.
+text when Meta rejects a request (`meta_rejected`, and 401/403 raised by Meta).
 
 | Code | HTTP | Meaning |
 |---|---|---|
-| `unauthorized` | 401 | Missing/invalid Bearer key |
-| `forbidden` | 403 | Key lacks the required scope |
+| `unauthorized` | 401 | Missing/invalid Bearer key, or Meta rejected the stored client token |
+| `forbidden` | 403 | Key lacks the required scope, or Meta denied the permission |
 | `not_found` | 404 | Resource not among your onboarded clients (or endpoint is Planned) |
 | `api_not_enabled` | 403 | Resource not in an active billing slot |
 | `slot_required` | 402 | A paid slot must be purchased first |
 | `billing_not_configured` | 402 | No payment method on file |
-| `bad_request` | 400 | Missing/invalid params (Meta validation message passed through) |
+| `bad_request` | 400 | Missing/invalid params — AdFlow-side validation, before the request reaches Meta |
+| `meta_rejected` | 422 | Meta rejected the request payload — `message` contains Meta's reason |
 | `rate_limited` | 429 | > 120 req/min — slow down |
-| `upstream_error` | 502 | Meta rejected the request (message included) |
+| `upstream_error` | 502 | Network failure or Meta 5xx — safe to retry |
 | `internal_error` | 500 | Unexpected server error |
 
 ## 25. Permission mapping

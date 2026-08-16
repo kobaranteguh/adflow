@@ -11,6 +11,7 @@ Manage your clients' Facebook Pages — posts, comments, Messenger, insights —
 
 | Method | Path | Purpose |
 |---|---|---|
+| GET | `/pages/{pageId}` | Page details (name, category, fan / follower counts, picture) |
 | GET | `/pages/{pageId}/posts` | List Page posts |
 | POST | `/pages/{pageId}/posts` | Publish a post |
 | DELETE | `/pages/posts/{id}` | Delete a post |
@@ -22,6 +23,10 @@ Manage your clients' Facebook Pages — posts, comments, Messenger, insights —
 | GET | `/pages/{pageId}/conversations` | List Messenger conversations |
 | GET | `/pages/conversations/{id}/messages` | Read messages in a conversation |
 | POST | `/pages/conversations/{id}/messages` | Reply to a conversation (24h window) |
+
+**Notes**
+- Endpoints under `/pages/posts/{id}/*`, `/pages/comments/{id}` and `/pages/conversations/{id}/messages` need a `?pageId=` query param — it tells AdFlow which onboarded Page's token to use (e.g. `/pages/comments/{commentId}?pageId={pageId}`).
+- `POST /pages/conversations/{id}/messages` is subject to Messenger's 24-hour window: you may only reply within 24 hours of the user's last message.
 
 ## Examples
 
@@ -35,7 +40,7 @@ curl -X POST https://adflowapps.com/api/v1/pages/{pageId}/posts \
 
 Reply to a comment:
 ```bash
-curl -X POST https://adflowapps.com/api/v1/pages/comments/{commentId} \
+curl -X POST "https://adflowapps.com/api/v1/pages/comments/{commentId}?pageId={pageId}" \
   -H "Authorization: Bearer ak_live_..." \
   -H "Content-Type: application/json" \
   -d '{ "message": "Thanks for your comment!" }'

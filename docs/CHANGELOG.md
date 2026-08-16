@@ -3,6 +3,118 @@
 Partner-facing changes to the AdFlow API (`/api/v1`). Newest first. The API is versioned by path
 (`/v1`); additive changes ship in place, breaking changes would ship under a new version path.
 
+## 2026-08-17
+
+### Added — `?depth=all`: follow a conversation past the first reply
+`GET /threads/{profileId}/comments?depth=all` returns the whole thread, including replies to replies.
+The default stays `depth=top` (comments directly on your posts).
+
+The second turn of a conversation is nested under *your* reply, so it was invisible in two ways at
+once — not top-level, and its parent is yours. Without this, every exchange appeared to end after one
+message.
+
+**No extra cost.** Both depths are one Meta call per page of posts. Measured on a real profile:
+`depth=top` 102 comments, `depth=all` 111 — the 9 extra are replies-to-replies. `depth` values other
+than `top`/`all` return `400`.
+
+### Added — `GET /threads/{profileId}/limits`: Meta's live quotas
+Posts, replies and deletes, each with `used` / `limit` / `remaining` on its own rolling 24h window.
+
+These are Meta's own counters — the same ones our publish gate checks — so they include activity from
+outside AdFlow. Previously you could only infer headroom from the `X-RateLimit-*` headers we attach
+after a publish, or keep a local counter that cannot see that traffic and drifts. Read this before a
+burst instead.
+
+### Added — `GET /threads/{profileId}/replies`: replies you have sent
+The outbound feed — replies this profile wrote, across every thread, newest first, with cursor
+pagination and `since`/`until`. Audit what your automation actually sent without sweeping every post.
+Distinct from `GET /threads/posts/{id}/replies`, which is what other people wrote on a post.
+
+### Added — `GET /threads/posts/{id}`: one post by id
+Fetch a single post or reply you already have the id for, instead of listing and filtering. `?fields=`
+overrides the default field set.
+
+## 2026-08-16
+
+### Added — `GET /threads/{profileId}/comments`: every comment, one call
+Polling for new comments no longer costs one call per post.
+
+```
+GET /v1/threads/{profileId}/comments?since=2026-08-16T10:00:00Z&limit=100
+```
+
+- **`since` filters the comment's timestamp, not the post's.** A new comment on a three-month-old
+  post is still returned. Scanning by post age was the flaw in the old pattern, not just its cost.
+- Own replies excluded by default (`include_own=true` to include them), `hidden` included, cursor
+  pagination via `meta.next`.
+- `limit` is a soft target — we stop fetching pages once it is reached but return the final page
+  whole. Truncating mid-page would make the cursor skip the rest of that page permanently.
+- `meta.truncated: true` means an internal page ceiling was hit with posts still unscanned; resend
+  with `after=<meta.next>`. Not an error.
+
+Measured against the per-post approach on a real 88-post profile: **88 calls → 1, 90 comments found
+by both, zero missed.**
+
+**v1 returns top-level comments only.** `?depth=all` (replies to replies) is reserved and currently
+returns `400` rather than silently succeeding.
+
+Raised by a partner whose 162-post account was making 2,400 calls a day to ask "anything new?" —
+nearly all returning empty — and still only saw 3 of 12 incoming replies, because the rest never
+entered the scan window. `GET /threads/posts/{id}/replies` is unchanged for per-post reads.
+
+## 2026-08-13
+
+### Changed — reply cap removed; Meta's real 1,000/24h quota now applies
+`POST /threads/posts/{id}/replies` used to be capped at **200 replies / 24h per profile** — a limit
+AdFlow invented, 5× stricter than Meta's. It is gone.
+
+- The reply path now reads Meta's live `reply_quota_usage` (**1,000 / rolling 24h**) from the same
+  `threads_publishing_limit` endpoint already used for post quota, and gates on that.
+- The count is Meta's own, so it includes replies made **outside AdFlow**. Where it used to be
+  possible to be blocked by us while Meta still had room, that no longer happens.
+- If Meta cannot be read (network issue, token lacking `threads_manage_replies`), the call is
+  **allowed through** — a metadata failure must not block legitimate traffic.
+- `429 rate_limited` on replies now means Meta's quota is genuinely exhausted, and carries
+  `X-RateLimit-Limit` / `X-RateLimit-Remaining`.
+
+**Unchanged:** the 30-second minimum gap between replies to the same profile. That guard targets
+burst frequency (Meta's spam signal), not quota, and stays.
+
+Same principle as the 2026-08-11 publishing change: what Meta does not block, we do not block.
+
+## 2026-08-11
+
+### Added — `platforms` on client onboarding
+`POST /clients` and `POST /clients/{id}/onboard-link` now accept an optional `platforms` array
+(`"ads"`, `"facebook"`, `"threads"`). The connect page offers only those, so a single-platform
+product no longer shows its customers options it does not support. Omit it and every configured
+platform is offered, exactly as before. Per-link, not per-account.
+
+### Added — `returnUrl` on client onboarding
+`POST /clients` and `POST /clients/{id}/onboard-link` now accept an optional `returnUrl`. After the
+client finishes authorising Meta, they are sent back there instead of being left on AdFlow's
+"Connected!" page — the piece white-label products were missing. `https://` only; any host, so your
+customers' own domains work. The redirect carries only `?success=true` or `?error=…`; confirm the
+real outcome via `GET /clients`. Omitting it keeps the previous behaviour exactly.
+
+### Changed — publishing rules now follow Meta, not our own guesses
+Threads publishing limits were realigned to Meta's documented ones:
+
+- **Daily cap raised to 250 posts / rolling 24h per profile** (was 100). This is Meta's own ceiling;
+  we no longer impose a lower one of our own.
+- **Every publish is now checked against Meta's live quota first**, on *all* paths. If Meta says the
+  profile is out of slots, the call returns `429` and nothing is sent to Threads. That count includes
+  posts made outside AdFlow, so it is authoritative where your own counter is not.
+- **Removed:** the block on reusing identical text (same profile, or across profiles). Meta does not
+  hard-block this and there are legitimate uses — recurring posts, a franchise running one promo
+  across its outlets. We log the pattern for monitoring instead of rejecting it.
+- **Kept:** a 60-second minimum between posts to the same profile (30s for replies) — a narrow guard
+  against machine-gun bursts, the one pattern that plainly meets Meta's "very high frequencies"
+  wording. At 60s a full day's quota is still reachable in about four hours.
+
+Net effect: fewer rejections, and the ones that remain are Meta's own limits rather than ours. See
+[Threads](./api/THREADS.md#-mandatory-publishing-rules-you-must-implement).
+
 ## 2026-06-17
 
 ### Added — Full Access parity

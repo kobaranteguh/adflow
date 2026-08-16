@@ -11,15 +11,16 @@ Manage your clients' Instagram Business accounts — media, comments, DMs, stori
 
 | Method | Path | Purpose |
 |---|---|---|
+| GET | `/instagram/{igId}` | Account details (username, bio, follower / media counts) |
 | GET | `/instagram/{igId}/media` | List published media |
 | POST | `/instagram/{igId}/media` | Publish a photo / video / Reel / carousel |
 | GET | `/instagram/{igId}/stories` | List stories |
 | GET | `/instagram/{igId}/insights` | Account insights (reach, impressions, …) |
 | GET | `/instagram/media/{id}/insights` | Media-level insights |
 | GET | `/instagram/media/{id}/comments` | Read comments on a media |
-| POST | `/instagram/media/{id}/comments` | Reply to a comment |
+| POST | `/instagram/media/{id}/comments` | Post a new comment on the media |
+| POST | `/instagram/comments/{id}` | Reply to a comment `{ message }` — or hide / unhide it `{ hidden: true\|false }` |
 | DELETE | `/instagram/comments/{id}` | Delete a comment |
-| POST | `/instagram/comments/{id}` | Hide / unhide a comment |
 | GET | `/instagram/{igId}/conversations` | List DM conversations |
 | GET | `/instagram/conversations/{id}/messages` | Read messages |
 | POST | `/instagram/conversations/{id}/messages` | Reply to a DM |
