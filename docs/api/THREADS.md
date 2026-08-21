@@ -25,8 +25,42 @@ Publish to and manage your clients' Threads profiles — posts, replies, mention
 | POST | `/threads/replies/{id}` | Hide / unhide a reply |
 | GET | `/threads/{profileId}/mentions` | Posts that mention the profile |
 | GET | `/threads/{profileId}/insights` | Views, likes, replies, reposts **and follower count** |
+| POST | `/threads/posts/{id}/repost` | Repost a published post |
+| GET | `/threads/posts/{id}/pending-replies` | Replies awaiting approval |
+| POST | `/threads/replies/{id}/approve` | Approve or ignore a pending reply |
 
 **Note:** endpoints under `/threads/posts/{id}/*` and `/threads/replies/{id}` need a `?profileId=` query param — it tells AdFlow which onboarded profile's token to use (e.g. `/threads/posts/{postId}/replies?profileId={profileId}`).
+
+## Publish options
+
+Beyond `mediaType` / `text` / `mediaUrls`, `POST /threads/{profileId}/posts` accepts:
+
+| Field | What it does |
+|---|---|
+| `replyToId` | Publish as a reply to that post |
+| `topicTag` | Topic tag (no periods or ampersands) |
+| `replyControl` | Who may reply: `everyone` · `accounts_you_follow` · `mentioned_only` · `parent_post_author_only` · `followers_only` |
+| `quotePostId` | Quote another post |
+| `linkAttachment` | Attach one URL as a link card |
+| `altText` | Accessibility description, 1,000 characters max |
+| `allowlistedCountryCodes` | Show only in these ISO 3166-1 alpha-2 countries |
+| `enableReplyApprovals` | Replies stay hidden until approved — read them with `/pending-replies`, act with `/approve` |
+| `pollOptions` + `pollDuration` | Poll, 2–4 options |
+
+## Not available on this app
+
+These are Meta permissions our App Review did **not** grant, so the API rejects them with `forbidden`
+rather than letting Meta fail the call for a reason that never mentions App Review:
+
+| Field / feature | Missing permission |
+|---|---|
+| `crossreshareToIg` (share to IG Story) | `threads_share_to_instagram` |
+| `locationId` (location tagging) | `threads_location_tagging` |
+| Keyword search | `threads_keyword_search` |
+| Public profile lookup | `threads_profile_discovery` |
+
+Publish to Instagram separately with `POST /instagram/{igId}/media` if you need both.
+
 
 ## Examples
 

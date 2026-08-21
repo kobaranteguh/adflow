@@ -253,6 +253,9 @@ Dynamic product ads (DPA) and catalog-sales campaigns depend on this.
 | Method | Path | Status | Purpose |
 |---|---|---|---|
 | GET | `/ads/{accountId}/insights` | Available | Account insights; presets or raw passthrough |
+| GET | `/ads/{accountId}/activities` | Account change log — who changed what, when |
+| GET | `/ads/{accountId}/saved-audiences` | Saved targeting audiences |
+| GET | `/ads/{accountId}/ad-rules` | Meta's automated rules on the account (read-only) |
 | GET | `…/insights?level=campaign\|adset\|ad` | Available | Per-level insights |
 | GET | `…/insights?breakdown=…` / `?breakdowns=…` | Available | Breakdowns (age/gender/platform/placement/device/country/…) |
 | GET | `…/insights?date_preset=` / `?since=&until=` | Available | Date preset or custom range |

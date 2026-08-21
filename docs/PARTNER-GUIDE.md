@@ -55,7 +55,7 @@ curl -X POST https://adflowapps.com/api/v1/clients \
 | Field | Why it matters |
 |---|---|
 | `externalRef` | Your own user id. **Idempotent** — sending the same ref returns the existing client (`reused: true`) instead of creating a duplicate. Safe to retry |
-| `platforms` | `"ads"` · `"facebook"` · `"threads"`. The connect page offers only these, so your customer is never shown options your product does not support. Omit to offer everything |
+| `platforms` | `"ads"` · `"facebook"` · `"threads"` · `"instagram"`. The connect page offers only these, so your customer is never shown options your product does not support. Omit to offer everything. `"facebook"` connects Pages **and** any Instagram account linked to them; `"instagram"` is a direct Instagram Login for Business accounts that have **no** Facebook Page |
 | `returnUrl` | Where the customer lands after authorising. Send them back into **your** flow, on your domain. `https://` only, any host. Carries `?success=true` or `?error=…` — confirm the real outcome with `GET /clients` |
 
 Send `onboardUrl` to your customer from inside your product. They open it, authorise with Meta, and
@@ -112,6 +112,12 @@ curl -X POST https://adflowapps.com/api/v1/threads/17841400000000000/posts \
 curl -X POST https://adflowapps.com/api/v1/pages/1029384/posts \
   -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json" \
   -d '{ "message": "Hi" }'
+
+# Pages - reply to a Messenger customer (PSID comes from the webhook)
+curl -X POST https://adflowapps.com/api/v1/pages/1029384/messages   -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json"   -d '{ "recipientId": "7234567890123456", "message": "We open at 9am." }'
+
+# Instagram - reply to a DM
+curl -X POST https://adflowapps.com/api/v1/instagram/17841400000000000/messages   -H "Authorization: Bearer ak_live_..." -H "Content-Type: application/json"   -d '{ "recipientId": "6789012345678901", "message": "Sent you the price list." }'
 ```
 
 ---
@@ -146,6 +152,36 @@ Full detail and error codes: [Threads](./api/THREADS.md#-mandatory-publishing-ru
 
 ---
 
+## 2c. Building an inbox (Messenger + Instagram DM + comments)
+
+Messaging and comments are **live**, on both Pages and Instagram. If you are building a CRM or a
+shared inbox, this is the part you need - the full endpoint list is in
+[PAGES.md](./api/PAGES.md) and [INSTAGRAM.md](./api/INSTAGRAM.md), and the shape of every event is in
+[API-REFERENCE.md](./API-REFERENCE.md#webhooks-meta--adflow--your-system).
+
+The five rules that decide whether your inbox works:
+
+1. **Answer webhooks by sender id, not conversation id.** Meta's messaging webhooks contain a PSID
+   (Messenger) or IGSID (Instagram) and no conversation id at all. Reply with
+   `POST /pages/{pageId}/messages` or `POST /instagram/{igId}/messages`, passing `recipientId`.
+2. **The 24-hour window is real, and there is a way past it.** Inside 24 hours of the customer's last
+   message the default `messagingType: "RESPONSE"` works. Outside it, a human agent may reply for up
+   to **7 days** with `{"messagingType":"MESSAGE_TAG","tag":"HUMAN_AGENT"}` on both platforms.
+   Instagram accepts `HUMAN_AGENT` only. Tags Meta retired on 27 April 2026 are rejected with
+   `bad_request` before the call ever leaves AdFlow.
+3. **A commenter who never messaged you can still be reached - once.**
+   `POST /pages/comments/{id}/private-reply` and `POST /instagram/comments/{id}/private-reply` open a
+   private thread from a public comment. Meta allows this once per comment, within 7 days.
+4. **Resolve display names yourself and cache them.** Messaging webhooks carry ids only.
+   `GET /pages/contacts/{psid}` and `GET /instagram/contacts/{igsid}` return name, username and
+   picture for someone who has an existing thread with that account.
+5. **Mark threads read so both inboxes agree.** `{"recipientId":"...","action":"mark_seen"}` on the same
+   messages endpoint clears Meta's own unread counter - otherwise the client's phone keeps showing
+   unread threads your staff already answered. AdFlow does not store a separate read state: the
+   unread counter in `GET .../conversations` is Meta's.
+
+---
+
 ## 3. The REST API
 
 No client library to install — every endpoint is plain HTTPS + a Bearer key, callable from any
@@ -156,7 +192,12 @@ language (`fetch`, `curl`, Guzzle, `requests`, …). Conventions:
 - **Envelope:** success → `{ "ok": true, "data": … }`; error → `{ "ok": false, "error": { "code", "message" } }`
 - **Routing key** = the Meta object id in the path: `/ads/{adAccountId}`, `/threads/{profileId}`,
   `/pages/{pageId}`, `/instagram/{igId}`.
-- **Pagination** (lists): add `?paginate=1` or `?after=<cursor>` → `{ items, paging: { after, has_next } }`.
+- **Pagination** (lists): add `?paginate=1` or `?after=<cursor>` for
+  `{ "ok": true, "data": { "items": [...], "paging": { "after": "<cursor>|null", "has_next": true } } }`.
+  Without either parameter a list returns a plain array capped by `?limit=` (max 100) - the original
+  shape, kept for existing integrations. Available on Page posts / photos / videos / conversations /
+  conversation messages / post comments, and Instagram media / conversations / conversation messages /
+  media comments.
 
 Full endpoint references per platform:
 - [Marketing API (Ads)](./api/MARKETING.md) — campaigns, ad sets, ads, creatives, media, audiences,
@@ -230,6 +271,9 @@ pip package to install or keep updated.)
 object id routes every call/webhook to the right client.
 
 **What about Instagram / TikTok?** Pages-linked IG imports today ($3/mo per account, from the shared
-Threads slot pool); standalone IG & TikTok endpoints are on the roadmap.
+Threads slot pool), and a client whose Instagram Business account has **no** Facebook Page can connect
+directly - ask for `platforms: ["instagram"]` on the onboarding link. The full Instagram surface
+(publish, comments, DMs, insights, mentions) is live; see [INSTAGRAM.md](./api/INSTAGRAM.md).
+TikTok is still on the roadmap.
 
 See also: [API-REFERENCE.md](./API-REFERENCE.md) · [META-POLICY.md](./META-POLICY.md)
