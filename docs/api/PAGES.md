@@ -40,6 +40,7 @@ Manage your clients' Facebook Pages — posts, comments, Messenger, insights —
 | POST | `/pages/conversations/{id}/messages` | Reply to a conversation (24h window) |
 | POST | `/pages/{pageId}/messages` | Send a message by PSID (24h window) |
 | POST | `/pages/{pageId}/attachments` | Upload a file once, get a reusable `attachment_id` |
+| GET | `/pages/contacts/{psid}` | Display name + picture for a Messenger contact |
 | GET | `/pages/{pageId}/subscriptions` | Which webhook fields this Page is subscribed to |
 | POST | `/pages/{pageId}/subscriptions` | (Re)subscribe this Page to webhooks |
 | DELETE | `/pages/{pageId}/subscriptions` | Unsubscribe this Page from webhooks |

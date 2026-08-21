@@ -35,6 +35,7 @@ Manage your clients' Instagram Business accounts — media, comments, DMs, stori
 | GET | `/instagram/conversations/{id}/messages` | Read messages |
 | POST | `/instagram/conversations/{id}/messages` | Reply to a DM |
 | POST | `/instagram/{igId}/messages` | Send a DM by IGSID, or a sender action (`mark_seen`, `react`, …) |
+| GET | `/instagram/contacts/{igsid}` | Username, name and picture for a DM contact |
 
 **Notes**
 - Endpoints under `/instagram/media/{id}/*`, `/instagram/comments/{id}`, `/instagram/conversations/{id}/*` and `/instagram/containers/{id}` need an `?igId=` query param — it tells AdFlow which onboarded account's token to use.
