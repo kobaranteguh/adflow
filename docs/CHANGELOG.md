@@ -5,6 +5,24 @@ Partner-facing changes to the AdFlow API (`/api/v1`). Newest first. The API is v
 
 ## 2026-08-31
 
+### Verified — comments and messaging tested end to end on live accounts
+
+Both platform pages now carry a **Verified against live accounts** table listing exactly what was
+exercised, with real writes on real accounts: reply, hide, unhide and delete on comments for
+Instagram and Pages, plus Messenger and Instagram Direct sends. See
+[INSTAGRAM.md](./api/INSTAGRAM.md) and [PAGES.md](./api/PAGES.md).
+
+Two rejections are documented there because they are easy to confuse:
+
+- `code 10 / 2534022` (Instagram) and `code 551 / 1893047` (Messenger) mean the **24-hour window has
+  closed**. Permission is fine; the person cannot be reached right now.
+- `(#3) Application does not have the capability` means the Instagram account was connected through
+  the Facebook route. Reconnect with `platforms: ["instagram"]`.
+
+For Pages, roughly 7 in 10 connected Page tokens we sampled carry `pages_messaging`; the rest were
+connected before it was requested and return `(#200) Requires permission: pages_messaging…` until the
+client reconnects.
+
 ### Changed — Instagram connects through the Instagram route only
 
 The `"facebook"` onboarding route no longer imports Instagram accounts linked to a Page. It connects

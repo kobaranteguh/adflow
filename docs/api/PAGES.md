@@ -7,6 +7,34 @@ Manage your clients' Facebook Pages — posts, comments, Messenger, insights —
 - **`{pageId}`** = a client's Page id you onboarded and enabled.
 - **Billing:** Free.
 
+## Verified against live accounts
+
+Last checked **31 August 2026** on real Facebook Pages, with real writes — not mocks.
+
+| Capability | Status |
+|---|---|
+| Read posts, comments, DM conversations | ✅ |
+| **Comment on a post** — `POST /pages/posts/{id}/comments` | ✅ |
+| **Reply to a comment** — `POST /pages/comments/{id}` | ✅ |
+| **Hide / unhide a comment** — `POST /pages/comments/{id}` `{hidden}` | ✅ both directions, on a real visitor comment |
+| **Delete a comment** — `DELETE /pages/comments/{id}` | ✅ |
+| **Messenger send** — `POST /pages/{pageId}/messages` | ✅ Send API accepted our write (`200`, Meta returned the recipient id) |
+| Publish a post — `POST /pages/{pageId}/posts` | ✅ live in production |
+
+**One Meta rule worth knowing:** a Page cannot hide its *own* comments. Meta answers
+`(#200) Can not hide or unhide this comment`. Hiding applies to comments left by other people, which
+is what moderation actually needs.
+
+**What a rejection looks like.** Messaging someone whose 24-hour window has closed returns Meta code
+`551` / subcode `1893047`, *"This person isn't available right now."* That is the window, not a
+permission problem — the same token succeeds on sender actions in the same request cycle.
+
+**It depends on the client's token, not only on us.** Across connected Pages we sampled, roughly
+**7 in 10 carry `pages_messaging`** and the rest do not — those were connected before the permission
+was requested, or by someone without a sufficient Page role. Messaging calls on those return
+`(#200) Requires permission: pages_messaging…`. The fix is for the client to reconnect the Page; the
+resource, id and slot stay the same.
+
 ## Endpoints
 
 | Method | Path | Purpose |

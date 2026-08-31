@@ -17,6 +17,30 @@ Manage your clients' Instagram Business accounts — media, comments, DMs, stori
 > that error, the account was connected through the wrong route: re-run onboarding with
 > `platforms: ["instagram"]` and it clears immediately.
 
+## Verified against live accounts
+
+Last checked **31 August 2026** on a real Instagram Business account (Instagram Login), with real
+writes — not mocks.
+
+| Capability | Status |
+|---|---|
+| Read media, comments, DM conversations, insights, publishing quota | ✅ |
+| **Reply to a comment** — `POST /instagram/comments/{id}` | ✅ reply created, confirmed on Instagram |
+| **Hide / unhide a comment** — `POST /instagram/comments/{id}` `{hidden}` | ✅ both directions |
+| **Delete a comment** — `DELETE /instagram/comments/{id}` | ✅ |
+| **Send a DM** — `POST /instagram/{igId}/messages` | ✅ **63 sends in production**, all `201` |
+| Sender actions (`mark_seen`, `typing_on`, `react`) | ✅ accepted by Meta's Send API |
+| Mentions — `GET /instagram/{igId}/mentions` | ✅ |
+
+The DM figure is not a lab number: it is 63 consecutive successful sends through this API on a live
+client account over 29–30 August, each returning `201` with Meta's message id.
+
+**What a rejection looks like, and what it means.** Sending outside the 24-hour window returns Meta
+code `10` / subcode `2534022`, *"This message is sent outside of allowed window."* That is a timing
+rejection — the permission is fine. Do not confuse it with `(#3) Application does not have the
+capability`, which means the account was connected through the wrong onboarding route (see the box
+above).
+
 ## Endpoints
 
 | Method | Path | Purpose |
