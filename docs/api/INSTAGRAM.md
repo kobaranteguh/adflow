@@ -7,6 +7,16 @@ Manage your clients' Instagram Business accounts — media, comments, DMs, stori
 - **`{igId}`** = a client's Instagram Business account id you onboarded and enabled.
 - **Billing:** Free.
 
+> **Onboard Instagram through the Instagram route — always.** Ask for `platforms: ["instagram"]`,
+> whether or not the account is linked to a Facebook Page. The `"facebook"` route connects Pages
+> only; it does not import Instagram accounts.
+>
+> Everything on this page runs on `graph.instagram.com` with an Instagram Login token. A Facebook
+> Page token cannot reach it — Meta answers `(#3) Application does not have the capability to make
+> this API call.` on every call, including sends that are well inside the 24-hour window. If you see
+> that error, the account was connected through the wrong route: re-run onboarding with
+> `platforms: ["instagram"]` and it clears immediately.
+
 ## Endpoints
 
 | Method | Path | Purpose |
@@ -49,7 +59,7 @@ Manage your clients' Instagram Business accounts — media, comments, DMs, stori
   not hold it, so replies are limited to the 24-hour window. Reach a commenter through
   `POST /instagram/comments/{id}/private-reply` instead.
 - **Business Discovery** only works for public Business/Creator accounts; anything else returns `not_found`.
-- **Connecting an account with no Facebook Page.** Ask for the `instagram` platform on the onboarding link (`platforms: ["instagram"]`) — that is a direct Instagram Login. The `facebook` platform only discovers Instagram accounts already linked to a Page.
+- **Connecting an account.** Always ask for the `instagram` platform on the onboarding link (`platforms: ["instagram"]`) — a direct Instagram Login. This is the only route to Instagram; the `facebook` platform connects Pages only and does not import Instagram accounts.
 - `POST /instagram/{igId}/messages` and the conversation reply are both bound by Instagram's 24-hour messaging window.
 
 ## Examples

@@ -55,8 +55,32 @@ curl -X POST https://adflowapps.com/api/v1/clients \
 | Field | Why it matters |
 |---|---|
 | `externalRef` | Your own user id. **Idempotent** — sending the same ref returns the existing client (`reused: true`) instead of creating a duplicate. Safe to retry |
-| `platforms` | `"ads"` · `"facebook"` · `"threads"` · `"instagram"`. The connect page offers only these, so your customer is never shown options your product does not support. Omit to offer everything. `"facebook"` connects Pages **and** any Instagram account linked to them; `"instagram"` is a direct Instagram Login for Business accounts that have **no** Facebook Page |
+| `platforms` | `"ads"` · `"facebook"` · `"threads"` · `"instagram"`. The connect page offers only these, so your customer is never shown options your product does not support. Omit to offer everything. **One platform, one door** — see the box below |
 | `returnUrl` | Where the customer lands after authorising. Send them back into **your** flow, on your domain. `https://` only, any host. Carries `?success=true` or `?error=…` — confirm the real outcome with `GET /clients` |
+
+> **One platform, one door.** Each platform has exactly one onboarding route, and they do not
+> substitute for one another:
+>
+> | Platform | Ask for | Connects |
+> |---|---|---|
+> | Facebook Pages · Messenger | `"facebook"` | Pages only — **never** Instagram, even when an IG account is linked to the Page |
+> | Instagram — posts, comments, DMs | `"instagram"` | Instagram Login. Required **whether or not** the account has a Facebook Page |
+> | Ad accounts | `"ads"` | Meta ad accounts |
+> | Threads | `"threads"` | Threads profile |
+>
+> A client who needs both a Page and Instagram runs **two** onboardings — one per platform. Order
+> does not matter and neither one disturbs the other.
+>
+> Why this matters: Instagram messaging and publishing run on `graph.instagram.com` with an
+> Instagram Login token. A Facebook Page token cannot do that work — Meta answers
+> `(#3) Application does not have the capability to make this API call.` Before 31 Aug 2026 the
+> `"facebook"` route also imported linked Instagram accounts using the Page token; those resources
+> could never send or publish, and re-running the Facebook onboarding would overwrite a working
+> Instagram Login token with a broken one. That route no longer touches Instagram at all.
+>
+> **If you onboarded an Instagram account through `"facebook"` before 31 Aug 2026**, re-run the
+> onboarding with `platforms: ["instagram"]`. Nothing else changes — same resource, same slot, same
+> id.
 
 Send `onboardUrl` to your customer from inside your product. They open it, authorise with Meta, and
 their resources import automatically. The link expires after about an hour; mint a fresh one with
@@ -270,10 +294,9 @@ pip package to install or keep updated.)
 **Can I manage many clients with one key?** Yes — that's the model. Each client onboards once; the
 object id routes every call/webhook to the right client.
 
-**What about Instagram / TikTok?** Pages-linked IG imports today ($3/mo per account, from the shared
-Threads slot pool), and a client whose Instagram Business account has **no** Facebook Page can connect
-directly - ask for `platforms: ["instagram"]` on the onboarding link. The full Instagram surface
-(publish, comments, DMs, insights, mentions) is live; see [INSTAGRAM.md](./api/INSTAGRAM.md).
-TikTok is still on the roadmap.
+**What about Instagram / TikTok?** Instagram connects through `platforms: ["instagram"]` — always,
+whether or not the account has a Facebook Page ($3/mo per account, from the shared Threads slot
+pool). The full surface (publish, comments, DMs, insights, mentions) is live; see
+[INSTAGRAM.md](./api/INSTAGRAM.md). TikTok is still on the roadmap.
 
 See also: [API-REFERENCE.md](./API-REFERENCE.md) · [META-POLICY.md](./META-POLICY.md)

@@ -40,7 +40,7 @@ protect this.
 | Ads | `ads_management`, `ads_read`, `business_management` (Marketing API access tier) |
 | Threads | `threads_basic`, `threads_content_publish`, `threads_manage_insights`, `threads_manage_replies`, `threads_read_replies` |
 | Pages | `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `pages_messaging` |
-| Instagram | `instagram_business_*` (Pages-linked import live; standalone endpoints pending) |
+| Instagram | `instagram_business_basic`, `instagram_business_content_publish`, `instagram_business_manage_comments`, `instagram_business_manage_insights`, `instagram_business_manage_messages` — all Advanced. Granted through **Instagram Login only**; the Page-token route (`instagram_manage_*`) is not held by this app |
 
 Advanced Access for these is governed by AdFlow's App Review. Some permissions may still be expanding
 to Standard/Advanced tiers — the Marketing API access tier in particular scales limits with verified
