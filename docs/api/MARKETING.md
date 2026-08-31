@@ -340,7 +340,7 @@ Manager API).
 ## 26. Changelog / versioning
 - **API version:** `v1` (path-based: `/api/v1`). Breaking changes ship under a new version path;
   additive changes (new fields/endpoints) ship in place.
-- **Graph version:** AdFlow calls Meta Graph `v21.0` for the ads surface.
+- **Graph version:** AdFlow calls Meta Graph `v25.0` for the ads surface — the same version our webhook subscriptions are pinned to. You never send a version yourself; we inject it.
 
 | Date | Change |
 |---|---|
