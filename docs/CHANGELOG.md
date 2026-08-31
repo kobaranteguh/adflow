@@ -3,6 +3,43 @@
 Partner-facing changes to the AdFlow API (`/api/v1`). Newest first. The API is versioned by path
 (`/v1`); additive changes ship in place, breaking changes would ship under a new version path.
 
+## 2026-08-31
+
+### Changed — Instagram connects through the Instagram route only
+
+The `"facebook"` onboarding route no longer imports Instagram accounts linked to a Page. It connects
+Pages. To connect Instagram, ask for `platforms: ["instagram"]` — **whether or not** the account has a
+Facebook Page. A client who needs both runs two onboardings; order does not matter.
+
+This is a behaviour change, so read it even if you think it does not touch you.
+
+**Why.** Instagram messaging, publishing and reads run on `graph.instagram.com` with an Instagram
+Login token. The permissions AdFlow holds for Instagram are the `instagram_business_*` family, and
+they only work on that host. A Facebook Page token cannot reach the Instagram surface at all — Meta
+answers `(#3) Application does not have the capability to make this API call.`
+
+The old behaviour stored the Page token against the discovered Instagram account. Those resources
+could never send, publish or read. Worse, re-running the Facebook onboarding for a client who *had*
+connected Instagram properly would overwrite their working token with the broken one — silently, with
+no error at onboarding time, and no signal until every subsequent call started failing. That happened
+to a live account on 30 August: 65 successful sends, then 25 consecutive failures beginning 60 seconds
+after the token was replaced.
+
+**What you should do.** If you onboarded an Instagram account through `"facebook"`, re-run the
+onboarding with `platforms: ["instagram"]`. Same resource, same id, same slot — only the token
+changes. A quick way to tell: if `POST /instagram/{igId}/messages` returns `(#3) ... capability`
+inside the 24-hour window, that account came in through the wrong route.
+
+We have also added a guard: a Page token can no longer replace an Instagram Login token on an
+Instagram resource, on any code path.
+
+### Changed — Meta Graph version is now `v25.0`
+
+The ads, Pages and Instagram surfaces now call Graph `v25.0` (was `v21.0` / `v23.0`), matching the
+version our webhook subscriptions are pinned to. You never send a version yourself, so there is
+nothing to change on your side. Verified against live accounts before the switch: reads returned
+byte-identical responses on v21, v25 and v26, and campaign-creation validation behaved identically.
+
 ## 2026-08-17
 
 ### Added — `?depth=all`: follow a conversation past the first reply
