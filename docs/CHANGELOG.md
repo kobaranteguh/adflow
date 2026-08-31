@@ -5,6 +5,43 @@ Partner-facing changes to the AdFlow API (`/api/v1`). Newest first. The API is v
 
 ## 2026-08-31
 
+### Added — `tokenType`, `healthy` and `reason` on every resource
+
+`GET /clients` returned only `apiEnabled`, which tells you what *you* switched on — not whether it
+works. A resource connected through the wrong onboarding route showed green while every call to it
+failed. Each resource now also carries:
+
+```json
+{ "tokenType": "PAGE", "healthy": false, "action": "reconnect",
+  "reason": "Connected through the Facebook route, so this holds a Page token. Instagram needs an Instagram Login token — re-onboard with platforms: [\"instagram\"]." }
+```
+
+`tokenType` is `IG` · `PAGE` · `THREADS` · `UNKNOWN` · `NONE`. `healthy: false` means calls will
+fail, whatever `apiEnabled` says; `reason` is written to be displayed as-is. Computed from stored
+state with no Meta call, so listing hundreds of resources costs nothing extra. The credential itself
+is never returned.
+
+### Added — `window_closed` error code, and Meta's numeric codes on every rejection
+
+A closed 24-hour window used to arrive as a generic `meta_rejected` carrying only Meta's message
+text, so telling "nobody can be reached right now" apart from "the permission is missing" meant
+string-matching prose that Meta changes without notice.
+
+```json
+{ "ok": false,
+  "error": { "code": "window_closed",
+             "message": "This message is sent outside of allowed window.",
+             "metaCode": 10, "metaSubcode": 2534022, "retryable": false } }
+```
+
+`window_closed` (HTTP 422) means exactly one thing: the recipient cannot be reached right now. Not a
+permission problem, not a bug, not worth retrying. Mapped from Meta subcodes `2534022` / `1893047` /
+`2018278` and codes `551` / `613`.
+
+Every other Meta rejection now carries `metaCode` and `metaSubcode` where Meta supplies them — so
+`meta_rejected` with `metaCode: 3` is unmistakably "wrong onboarding route", and you branch on
+numbers instead of prose.
+
 ### Verified — comments and messaging tested end to end on live accounts
 
 Both platform pages now carry a **Verified against live accounts** table listing exactly what was

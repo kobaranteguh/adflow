@@ -307,6 +307,11 @@ Register a callback in **Developer → API Access → Webhooks**. AdFlow forward
 Envelope: `{ "ok": false, "error": { "code": "...", "message": "..." } }`. `message` is Meta's own
 text when Meta rejects a request (`meta_rejected`, and 401/403 raised by Meta).
 
+When Meta supplies them, the error object also carries **`metaCode`** and **`metaSubcode`** — its own
+numeric codes. Branch on those rather than on the message text, which Meta changes without notice.
+For example `meta_rejected` with `metaCode: 3` is always "this Instagram account was onboarded
+through the Facebook route" — see [INSTAGRAM.md](./INSTAGRAM.md).
+
 | Code | HTTP | Meaning |
 |---|---|---|
 | `unauthorized` | 401 | Missing/invalid Bearer key, or Meta rejected the stored client token |
@@ -316,7 +321,8 @@ text when Meta rejects a request (`meta_rejected`, and 401/403 raised by Meta).
 | `slot_required` | 402 | A paid slot must be purchased first |
 | `billing_not_configured` | 402 | No payment method on file |
 | `bad_request` | 400 | Missing/invalid params — AdFlow-side validation, before the request reaches Meta |
-| `meta_rejected` | 422 | Meta rejected the request payload — `message` contains Meta's reason |
+| `meta_rejected` | 422 | Meta rejected the request payload — `message` contains Meta's reason, plus `metaCode` / `metaSubcode` |
+| `window_closed` | 422 | Messaging only: the 24-hour window has closed. Not a permission problem and not retryable |
 | `rate_limited` | 429 | > 120 req/min — slow down |
 | `upstream_error` | 502 | Network failure or Meta 5xx — safe to retry |
 | `internal_error` | 500 | Unexpected server error |
